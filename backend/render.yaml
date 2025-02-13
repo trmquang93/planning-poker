@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: planning-poker-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 5555
+      - key: FRONTEND_URL
+        value: https://planning-poker-nine-umber.vercel.app
+    autoDeploy: true 

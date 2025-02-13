@@ -3,7 +3,9 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import './GameRoom.css';
 
-const SOCKET_SERVER_URL = 'http://localhost:5555';
+// Get the backend URL from environment variable or use localhost for development
+const SOCKET_SERVER_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5555';
+
 const FIBONACCI_NUMBERS = [1, 2, 3, 5, 8, 13, 21];
 
 function GameRoom() {
