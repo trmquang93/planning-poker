@@ -1,20 +1,24 @@
 const express = require('express');
 const http = require('http');
-const socketIO = require('socket.io');
+const { Server } = require('socket.io');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIO(server, {
-    cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"]
-    }
+app.use(cors());
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'healthy' });
 });
 
-app.use(cors());
-app.use(express.json());
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: process.env.NODE_ENV === 'production' ? ['https://planning-poker-nine-umber.vercel.app'] : ['http://localhost:3000'],
+        methods: ['GET', 'POST']
+    }
+});
 
 // Store rooms in memory (in production, use a database)
 const rooms = new Map();
@@ -66,7 +70,7 @@ io.on('connection', (socket) => {
     socket.on('addStory', ({ roomId, story }) => {
         const room = rooms.get(roomId);
         if (room && room.host === socket.id) {
-            room.stories.push({ ...story, id: uuidv4(), status: 'pending' });
+            room.stories.push({...story, id: uuidv4(), status: 'pending' });
             io.to(roomId).emit('storiesUpdated', { stories: room.stories });
         }
     });
@@ -142,4 +146,4 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 5555;
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-}); 
+});
