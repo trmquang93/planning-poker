@@ -1,0 +1,23 @@
+{
+    "name": "planning-poker",
+    "version": "1.0.0",
+    "description": "A real-time planning poker web application",
+    "main": "server/index.js",
+    "scripts": {
+        "start": "node server/index.js",
+        "dev": "nodemon server/index.js",
+        "client": "cd client && npm start",
+        "dev:full": "concurrently \"npm run dev\" \"npm run client\""
+    },
+    "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.21.2",
+        "socket.io": "^4.8.1",
+        "uuid": "^9.0.1"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2",
+        "nodemon": "^3.0.2"
+    }
+}
