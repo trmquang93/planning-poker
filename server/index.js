@@ -12,6 +12,11 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'healthy' });
 });
 
+// Test endpoint
+app.get('/test', (req, res) => {
+    res.status(200).json({ message: 'Server is running properly' });
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
@@ -28,26 +33,53 @@ io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
     // Create a new room
-    socket.on('createRoom', (callback) => {
-        // Leave previously joined rooms (except the socket's default room)
-        socket.rooms.forEach((room) => {
-            if (room !== socket.id) {
-                socket.leave(room);
+    socket.on('createRoom', (data, callback) => {
+        console.log('Received createRoom event from client:', socket.id);
+
+        try {
+            // Check if callback is actually the first parameter (for backward compatibility)
+            if (typeof data === 'function' && !callback) {
+                callback = data;
+                data = {};
             }
-        });
 
-        const roomId = uuidv4();
-        rooms.set(roomId, {
-            id: roomId,
-            host: socket.id,
-            users: [{ id: socket.id, name: 'Host' }],
-            stories: [],
-            currentStory: null,
-            votes: new Map()
-        });
+            // Ensure callback is a function
+            if (typeof callback !== 'function') {
+                console.error('Callback is not a function:', typeof callback);
+                return;
+            }
 
-        socket.join(roomId);
-        callback({ roomId, success: true });
+            // Leave previously joined rooms (except the socket's default room)
+            socket.rooms.forEach((room) => {
+                if (room !== socket.id) {
+                    socket.leave(room);
+                }
+            });
+
+            const roomId = uuidv4();
+            console.log('Created new room with ID:', roomId);
+
+            rooms.set(roomId, {
+                id: roomId,
+                host: socket.id,
+                users: [{ id: socket.id, name: 'Host' }],
+                stories: [],
+                currentStory: null,
+                votes: new Map()
+            });
+
+            socket.join(roomId);
+            console.log('Socket joined room:', roomId);
+
+            const response = { roomId, success: true };
+            console.log('Sending response to client:', response);
+            callback(response);
+        } catch (error) {
+            console.error('Error in createRoom handler:', error);
+            if (typeof callback === 'function') {
+                callback({ success: false, error: error.message });
+            }
+        }
     });
 
     // Join a room

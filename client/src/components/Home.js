@@ -32,7 +32,9 @@ function Home() {
     }, []);
 
     const createRoom = () => {
+        console.log('Create Room button clicked');
         if (!userName) {
+            console.log('Username empty, showing toast');
             toast({
                 title: 'Error',
                 description: 'Please enter your name',
@@ -43,10 +45,25 @@ function Home() {
             return;
         }
 
+        console.log('Saving username to localStorage:', userName);
         localStorage.setItem('userName', userName);
-        socket.emit('createRoom', (response) => {
-            if (response.success) {
+        console.log('Emitting createRoom event to server');
+
+        // Pass empty object as first argument for consistency with joinRoom
+        socket.emit('createRoom', {}, (response) => {
+            console.log('Received response from server:', response);
+            if (response && response.success) {
+                console.log('Room created successfully, navigating to:', response.roomId);
                 navigate(`/room/${response.roomId}`);
+            } else {
+                console.log('Room creation failed:', response);
+                toast({
+                    title: 'Error',
+                    description: 'Failed to create room. Please try again.',
+                    status: 'error',
+                    duration: 3000,
+                    isClosable: true,
+                });
             }
         });
     };
