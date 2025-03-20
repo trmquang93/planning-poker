@@ -1,0 +1,125 @@
+{
+  "78844d47-03ec-46fd-af9b-46661bddc901": {
+    "id": "78844d47-03ec-46fd-af9b-46661bddc901",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "088u6ZdoI63XyhttAAAF",
+    "users": [
+      {
+        "id": "088u6ZdoI63XyhttAAAF",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      },
+      {
+        "id": "bCcVKEq2YPkIn6ZFAAAF",
+        "userId": "8d533168-c0d9-4061-9a34-683052e7c5a3",
+        "name": "Guest"
+      }
+    ],
+    "stories": [
+      {
+        "title": "padlock",
+        "id": "4c5dc17b-14ef-4549-b1a4-a94681bddb9e",
+        "status": "pending"
+      },
+      {
+        "title": "aaa",
+        "id": "b365f2cf-ba1b-4bfb-97ce-503027704792",
+        "status": "pending"
+      },
+      {
+        "title": "ddd",
+        "id": "64ffc46b-ebaf-4fed-a27b-5b0965f109c6",
+        "status": "pending"
+      },
+      {
+        "title": "ggg",
+        "id": "90e7f7e4-4545-4b7d-ac36-326de11182c4",
+        "status": "pending"
+      },
+      {
+        "title": "bbb",
+        "id": "9a339dcd-6efa-4081-9a5d-0df98cbdde56",
+        "status": "pending"
+      },
+      {
+        "title": "www",
+        "id": "94bb4cbd-edea-43f0-89a3-bdb50512b81e",
+        "status": "pending"
+      },
+      {
+        "title": "qweqw",
+        "id": "055f4a21-0336-4946-a1bb-eedd663b6102",
+        "status": "pending"
+      },
+      {
+        "title": "rrr",
+        "id": "f8d25437-ebed-4c62-9026-95c8740515ce",
+        "status": "pending"
+      }
+    ],
+    "currentStory": "b365f2cf-ba1b-4bfb-97ce-503027704792",
+    "votes": {},
+    "createdAt": "2025-03-20T17:45:45.427Z"
+  },
+  "b47a44bd-b927-4763-96f1-1a5e6630003c": {
+    "id": "b47a44bd-b927-4763-96f1-1a5e6630003c",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "lrApGyiB2vl7y21FAAAB",
+    "users": [
+      {
+        "id": "lrApGyiB2vl7y21FAAAB",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      },
+      {
+        "id": "7ZaNFJHhNR0fpwXgAAAF",
+        "userId": "8d533168-c0d9-4061-9a34-683052e7c5a3",
+        "name": "Quang"
+      }
+    ],
+    "stories": [
+      {
+        "title": "123",
+        "id": "9342f6ed-9eaf-4b19-9958-56cfd2431ed5",
+        "status": "pending"
+      },
+      {
+        "title": "aa",
+        "id": "4a0eb92c-0ddd-463a-9fcc-5ed40fce97e5",
+        "status": "pending"
+      },
+      {
+        "title": "456",
+        "id": "6fb01dcd-2a3b-4fc4-8b65-2f54ea34328a",
+        "status": "pending"
+      },
+      {
+        "title": "789",
+        "id": "792ceabe-0be0-4bd5-96c2-6914228c9cbd",
+        "status": "pending",
+        "createdAt": "2025-03-20T17:53:27.847Z"
+      },
+      {
+        "title": "111",
+        "id": "32b67141-ea15-47ed-99c1-4ede812ccaa0",
+        "status": "pending",
+        "createdAt": "2025-03-20T17:56:19.192Z"
+      },
+      {
+        "title": "222",
+        "id": "6b118675-f921-4f08-bc75-885d658482a6",
+        "status": "pending",
+        "createdAt": "2025-03-20T17:56:29.355Z"
+      },
+      {
+        "title": "447",
+        "id": "36de8769-ea0a-41b3-832f-b3eb3890c53f",
+        "status": "pending",
+        "createdAt": "2025-03-20T17:56:55.794Z"
+      }
+    ],
+    "currentStory": "9342f6ed-9eaf-4b19-9958-56cfd2431ed5",
+    "votes": {},
+    "createdAt": "2025-03-20T17:51:35.898Z"
+  }
+}

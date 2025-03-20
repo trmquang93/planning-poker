@@ -45,10 +45,89 @@ function Room() {
     const { hasCopied, onCopy } = useClipboard(roomId);
 
     useEffect(() => {
-        // Get the user's name from localStorage or prompt them
+        // Get the user's name and ID from localStorage
         const userName = localStorage.getItem('userName') || 'Guest';
+        const userId = localStorage.getItem('userId');
 
-        // Join the room when component mounts
+        if (!userId) {
+            navigate('/');
+            return;
+        }
+
+        // Setup all socket event listeners first
+        const setupSocketListeners = () => {
+            socket.on('userJoined', ({ users: updatedUsers, host }) => {
+                setUsers(updatedUsers);
+                setIsHost(host === userId);
+            });
+
+            socket.on('userLeft', ({ users: updatedUsers, host }) => {
+                setUsers(updatedUsers);
+                setIsHost(host === userId);
+            });
+
+            socket.on('storiesUpdated', ({ stories: updatedStories }) => {
+                console.log('Received storiesUpdated event:', updatedStories);
+                setStories(updatedStories);
+
+                // Show toast notification for new stories
+                const lastStory = updatedStories[updatedStories.length - 1];
+                if (lastStory && !stories.find(s => s.id === lastStory.id)) {
+                    toast({
+                        title: 'New Story Added',
+                        description: lastStory.title,
+                        status: 'success',
+                        duration: 2000,
+                        isClosable: true,
+                    });
+                }
+            });
+
+            socket.on('votingStarted', ({ storyId }) => {
+                setCurrentStory(storyId);
+                setVotesRevealed(false);
+                setVotes([]);
+                setSelectedVote(null);
+            });
+
+            socket.on('voteSubmitted', ({ totalVotes, userCount }) => {
+                toast({
+                    title: 'Vote submitted',
+                    description: `${totalVotes}/${userCount} votes received`,
+                    status: 'info',
+                    duration: 2000,
+                });
+            });
+
+            socket.on('votesRevealed', ({ votes: revealedVotes }) => {
+                setVotes(revealedVotes);
+                setVotesRevealed(true);
+            });
+
+            socket.on('votingCompleted', ({ stories: updatedStories }) => {
+                setStories(updatedStories);
+                setCurrentStory(null);
+                setVotes([]);
+                setVotesRevealed(false);
+                setSelectedVote(null);
+            });
+        };
+
+        // Clean up function to remove all listeners
+        const cleanupSocketListeners = () => {
+            socket.off('userJoined');
+            socket.off('userLeft');
+            socket.off('storiesUpdated');
+            socket.off('votingStarted');
+            socket.off('voteSubmitted');
+            socket.off('votesRevealed');
+            socket.off('votingCompleted');
+        };
+
+        // Setup listeners and join room
+        setupSocketListeners();
+
+        // Join room after setting up listeners
         socket.emit('joinRoom', { roomId, userName }, (response) => {
             if (!response.success) {
                 toast({
@@ -62,71 +141,55 @@ function Room() {
                 return;
             }
             setUsers(response.room.users);
-            setStories(response.room.stories);
-            setIsHost(response.room.host === socket.id);
+            setStories(response.room.stories || []);
+            setIsHost(response.room.isHost);
         });
 
-        socket.on('userJoined', ({ users: updatedUsers }) => {
-            setUsers(updatedUsers);
-            setIsHost(updatedUsers[0].id === socket.id);
-        });
-
-        socket.on('userLeft', ({ users: updatedUsers }) => {
-            setUsers(updatedUsers);
-            setIsHost(updatedUsers[0].id === socket.id);
-        });
-
-        socket.on('storiesUpdated', ({ stories: updatedStories }) => {
-            setStories(updatedStories);
-        });
-
-        socket.on('votingStarted', ({ storyId }) => {
-            setCurrentStory(storyId);
-            setVotesRevealed(false);
-            setVotes([]);
-            setSelectedVote(null);
-        });
-
-        socket.on('voteSubmitted', ({ totalVotes, userCount }) => {
-            toast({
-                title: 'Vote submitted',
-                description: `${totalVotes}/${userCount} votes received`,
-                status: 'info',
-                duration: 2000,
-            });
-        });
-
-        socket.on('votesRevealed', ({ votes: revealedVotes }) => {
-            setVotes(revealedVotes);
-            setVotesRevealed(true);
-        });
-
-        socket.on('votingCompleted', ({ stories: updatedStories }) => {
-            setStories(updatedStories);
-            setCurrentStory(null);
-            setVotes([]);
-            setVotesRevealed(false);
-            setSelectedVote(null);
-        });
-
+        // Cleanup on component unmount
         return () => {
-            socket.off('userJoined');
-            socket.off('userLeft');
-            socket.off('storiesUpdated');
-            socket.off('votingStarted');
-            socket.off('voteSubmitted');
-            socket.off('votesRevealed');
-            socket.off('votingCompleted');
+            cleanupSocketListeners();
         };
-    }, [roomId, toast, navigate]);
+    }, [roomId, navigate, toast]);
 
     const addStory = () => {
         if (!newStory.trim()) return;
+
+        // Optimistically add the story locally first
+        const tempStory = {
+            id: 'temp-' + Date.now(),
+            title: newStory.trim(),
+            status: 'pending'
+        };
+        setStories(prev => [...prev, tempStory]);
+
         socket.emit('addStory', {
             roomId,
             story: { title: newStory.trim() }
+        }, (response) => {
+            if (response && response.success) {
+                setNewStory(''); // Clear input only on success
+
+                // Remove the temporary story since we'll get the real one from the server
+                setStories(prev => prev.filter(s => s.id !== tempStory.id));
+            } else {
+                // Remove the temporary story if the server request failed
+                setStories(prev => prev.filter(s => s.id !== tempStory.id));
+                toast({
+                    title: 'Error',
+                    description: response?.message || 'Failed to add story. Please try again.',
+                    status: 'error',
+                    duration: 3000,
+                    isClosable: true,
+                });
+            }
         });
-        setNewStory('');
+    };
+
+    const handleKeyPress = (event) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            addStory();
+        }
     };
 
     const startVoting = (storyId) => {
@@ -216,6 +279,7 @@ function Room() {
                             <Input
                                 value={newStory}
                                 onChange={(e) => setNewStory(e.target.value)}
+                                onKeyPress={handleKeyPress}
                                 placeholder="Enter story description"
                                 pr="4.5rem"
                             />
