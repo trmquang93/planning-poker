@@ -16,6 +16,7 @@ import {
 } from '@chakra-ui/react';
 import { FaUser, FaHashtag, FaPlus, FaDoorOpen } from 'react-icons/fa';
 import { socket } from '../socket';
+import { v4 as uuidv4 } from 'uuid';
 
 function Home() {
     const [userName, setUserName] = useState('');
@@ -49,6 +50,10 @@ function Home() {
         localStorage.setItem('userName', userName);
         console.log('Emitting createRoom event to server');
 
+        // Generate a unique userId if not exists
+        const userId = localStorage.getItem('userId') || uuidv4();
+        localStorage.setItem('userId', userId);
+
         // Pass empty object as first argument for consistency with joinRoom
         socket.emit('createRoom', {}, (response) => {
             console.log('Received response from server:', response);
@@ -80,7 +85,11 @@ function Home() {
             return;
         }
 
+        // Generate a unique userId if not exists
+        const userId = localStorage.getItem('userId') || uuidv4();
+        localStorage.setItem('userId', userId);
         localStorage.setItem('userName', userName);
+
         socket.emit('joinRoom', { roomId, userName }, (response) => {
             if (response.success) {
                 navigate(`/room/${roomId}`);

@@ -207,7 +207,7 @@
         "name": "Host"
       },
       {
-        "id": "U4RvpU2AFibgVDkcAAAB",
+        "id": "9wiV9PCuBUXAw2CaAAAB",
         "userId": null,
         "name": "QQQ"
       }
@@ -220,10 +220,8 @@
         "createdAt": "2025-03-21T01:02:44.169Z"
       }
     ],
-    "currentStory": "7c7d942c-8a7f-4866-8bb3-60e8ac5c6200",
-    "votes": {
-      "mW71bxLqd6o": "5"
-    },
+    "currentStory": null,
+    "votes": {},
     "createdAt": "2025-03-21T01:02:39.111Z"
   }
 }
