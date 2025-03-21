@@ -153,12 +153,17 @@
   "c717e6ee-b9d8-4acf-b23b-6bbd1365d53a": {
     "id": "c717e6ee-b9d8-4acf-b23b-6bbd1365d53a",
     "host": "mW71bxLqd6o",
-    "hostSocketId": "QNYZ_AAGGttoJZdyAAAC",
+    "hostSocketId": "h_faBZxHpTl7_dFcAAAB",
     "users": [
       {
-        "id": "QNYZ_AAGGttoJZdyAAAC",
+        "id": "h_faBZxHpTl7_dFcAAAB",
         "userId": "mW71bxLqd6o",
         "name": "Host"
+      },
+      {
+        "id": "t2FM7HJtvHTQW1tLAAAB",
+        "userId": null,
+        "name": "QQQ"
       }
     ],
     "stories": [
@@ -170,7 +175,9 @@
       }
     ],
     "currentStory": "f4654f64-06cf-41f5-b0e0-06b25fa6fe42",
-    "votes": {},
+    "votes": {
+      "mW71bxLqd6o": "21"
+    },
     "createdAt": "2025-03-21T00:55:30.818Z"
   },
   "778a2980-5751-4681-affd-1a447624338c": {
@@ -199,15 +206,15 @@
   "5f39e4a1-fe77-440c-9174-b91d326f71d0": {
     "id": "5f39e4a1-fe77-440c-9174-b91d326f71d0",
     "host": "mW71bxLqd6o",
-    "hostSocketId": "NaE-e2kp7wZzonBMAAAB",
+    "hostSocketId": "NNQwgZCUPai91OxAAAAD",
     "users": [
       {
-        "id": "NaE-e2kp7wZzonBMAAAB",
+        "id": "NNQwgZCUPai91OxAAAAD",
         "userId": "mW71bxLqd6o",
         "name": "Host"
       },
       {
-        "id": "9wiV9PCuBUXAw2CaAAAB",
+        "id": "CGA9B3DTGTX_CT8IAAAJ",
         "userId": null,
         "name": "QQQ"
       }
@@ -223,5 +230,266 @@
     "currentStory": null,
     "votes": {},
     "createdAt": "2025-03-21T01:02:39.111Z"
+  },
+  "8801b47e-3990-4bf7-aa8c-0f56a6dca2d1": {
+    "id": "8801b47e-3990-4bf7-aa8c-0f56a6dca2d1",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "-LpAlWdLKIMSjBNlAAAF",
+    "users": [
+      {
+        "id": "-LpAlWdLKIMSjBNlAAAF",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      },
+      {
+        "id": "ejUbxdFc5l1vm3mAAAAC",
+        "userId": null,
+        "name": "QQQ"
+      },
+      {
+        "id": "LP7dd_sgWuUFXZFWAAAD",
+        "userId": "bfc6be22-3a2d-403a-a689-e12c7aecf3d3",
+        "name": "QQQ"
+      }
+    ],
+    "stories": [
+      {
+        "title": "vottingnngnasfda",
+        "id": "f20d290a-7b35-4e03-b56c-8b31f1e3ac58",
+        "status": "pending",
+        "createdAt": "2025-03-21T02:35:22.246Z"
+      }
+    ],
+    "currentStory": "f20d290a-7b35-4e03-b56c-8b31f1e3ac58",
+    "votes": {
+      "bfc6be22-3a2d-403a-a689-e12c7aecf3d3": "2"
+    },
+    "createdAt": "2025-03-21T02:35:17.133Z"
+  },
+  "a07a0e48-44fe-46a5-91c1-5bf1cec338ac": {
+    "id": "a07a0e48-44fe-46a5-91c1-5bf1cec338ac",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "EG6F3fqgCEdGUBHYAAAG",
+    "users": [
+      {
+        "id": "EG6F3fqgCEdGUBHYAAAG",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      },
+      {
+        "id": "JhqscVLbPgTdC7qzAAAB",
+        "userId": "bfc6be22-3a2d-403a-a689-e12c7aecf3d3",
+        "name": "QQQ"
+      }
+    ],
+    "stories": [
+      {
+        "title": "Sp1",
+        "id": "0b0baff3-4c7a-47b9-9eaa-2c211c598c36",
+        "status": "pending",
+        "createdAt": "2025-03-21T03:39:42.354Z"
+      }
+    ],
+    "currentStory": "0b0baff3-4c7a-47b9-9eaa-2c211c598c36",
+    "votes": {
+      "mW71bxLqd6o": "5",
+      "bfc6be22-3a2d-403a-a689-e12c7aecf3d3": "5"
+    },
+    "createdAt": "2025-03-21T03:39:20.168Z"
+  },
+  "f807bca1-c44e-4c63-9eb3-bdd3e98591be": {
+    "id": "f807bca1-c44e-4c63-9eb3-bdd3e98591be",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "nwxrt7pSCje8mK2aAAAQ",
+    "users": [
+      {
+        "id": "nwxrt7pSCje8mK2aAAAQ",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      }
+    ],
+    "stories": [
+      {
+        "title": "dấD",
+        "id": "fd15ba33-0b02-4869-b623-13ab38e13c57",
+        "status": "pending",
+        "createdAt": "2025-03-21T03:43:28.983Z"
+      },
+      {
+        "title": "ÁDASD",
+        "id": "20522a18-9697-4d81-b3de-2aa0be4000cb",
+        "status": "pending",
+        "createdAt": "2025-03-21T03:43:32.281Z"
+      }
+    ],
+    "currentStory": null,
+    "votes": {},
+    "createdAt": "2025-03-21T03:43:24.665Z"
+  },
+  "3a6f196b-708c-45b9-abed-da5b27eaa55d": {
+    "id": "3a6f196b-708c-45b9-abed-da5b27eaa55d",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "R8qCue2viuB_gsGgAAAB",
+    "users": [
+      {
+        "id": "R8qCue2viuB_gsGgAAAB",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      }
+    ],
+    "stories": [
+      {
+        "title": "111",
+        "id": "f3067812-11fb-4ae3-8c4b-e41720f7d368",
+        "status": "pending",
+        "createdAt": "2025-03-21T03:50:16.898Z"
+      }
+    ],
+    "currentStory": "f3067812-11fb-4ae3-8c4b-e41720f7d368",
+    "votes": {},
+    "createdAt": "2025-03-21T03:50:14.548Z"
+  },
+  "72188bfc-a3fa-43ed-8a57-48bec1447a5e": {
+    "id": "72188bfc-a3fa-43ed-8a57-48bec1447a5e",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "Tbs3DJf0BcgD84HyAAAF",
+    "users": [
+      {
+        "id": "Tbs3DJf0BcgD84HyAAAF",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      }
+    ],
+    "stories": [],
+    "currentStory": null,
+    "votes": {},
+    "votingScale": {
+      "id": "default",
+      "name": "Fibonacci",
+      "values": [
+        {
+          "value": "1",
+          "displayValue": "1",
+          "type": "numeric",
+          "sortOrder": 1
+        },
+        {
+          "value": "2",
+          "displayValue": "2",
+          "type": "numeric",
+          "sortOrder": 2
+        },
+        {
+          "value": "3",
+          "displayValue": "3",
+          "type": "numeric",
+          "sortOrder": 3
+        },
+        {
+          "value": "5",
+          "displayValue": "5",
+          "type": "numeric",
+          "sortOrder": 4
+        },
+        {
+          "value": "8",
+          "displayValue": "8",
+          "type": "numeric",
+          "sortOrder": 5
+        },
+        {
+          "value": "13",
+          "displayValue": "13",
+          "type": "numeric",
+          "sortOrder": 6
+        },
+        {
+          "value": "?",
+          "displayValue": "?",
+          "type": "special",
+          "sortOrder": 7
+        }
+      ],
+      "isDefault": true,
+      "createdBy": "system",
+      "lastModified": "2025-03-21T04:20:48.945Z"
+    },
+    "createdAt": "2025-03-21T04:22:50.887Z"
+  },
+  "73d56f5a-939d-4563-bd9d-9a223a4657f4": {
+    "id": "73d56f5a-939d-4563-bd9d-9a223a4657f4",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "rnxGE7kgBARJaS4GAAAD",
+    "users": [
+      {
+        "id": "rnxGE7kgBARJaS4GAAAD",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      }
+    ],
+    "stories": [
+      {
+        "title": "666",
+        "id": "c7d50f50-6f70-4ddf-97c9-6e29835f4424",
+        "status": "pending",
+        "createdAt": "2025-03-21T04:23:16.256Z"
+      }
+    ],
+    "currentStory": "c7d50f50-6f70-4ddf-97c9-6e29835f4424",
+    "votes": {
+      "mW71bxLqd6o": "5"
+    },
+    "votingScale": {
+      "id": "default",
+      "name": "Fibonacci",
+      "values": [
+        {
+          "value": "1",
+          "displayValue": "1",
+          "type": "numeric",
+          "sortOrder": 1
+        },
+        {
+          "value": "2",
+          "displayValue": "2",
+          "type": "numeric",
+          "sortOrder": 2
+        },
+        {
+          "value": "3",
+          "displayValue": "3",
+          "type": "numeric",
+          "sortOrder": 3
+        },
+        {
+          "value": "5",
+          "displayValue": "5",
+          "type": "numeric",
+          "sortOrder": 4
+        },
+        {
+          "value": "8",
+          "displayValue": "8",
+          "type": "numeric",
+          "sortOrder": 5
+        },
+        {
+          "value": "13",
+          "displayValue": "13",
+          "type": "numeric",
+          "sortOrder": 6
+        },
+        {
+          "value": "?",
+          "displayValue": "?",
+          "type": "special",
+          "sortOrder": 7
+        }
+      ],
+      "isDefault": true,
+      "createdBy": "system",
+      "lastModified": "2025-03-21T04:22:51.380Z"
+    },
+    "createdAt": "2025-03-21T04:23:10.710Z"
   }
 }

@@ -6,6 +6,30 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
 
+// Default voting scale
+const DEFAULT_SCALE = {
+    id: 'default',
+    name: 'Fibonacci',
+    values: [
+        { value: '1', displayValue: '1', type: 'numeric', sortOrder: 1 },
+        { value: '2', displayValue: '2', type: 'numeric', sortOrder: 2 },
+        { value: '3', displayValue: '3', type: 'numeric', sortOrder: 3 },
+        { value: '5', displayValue: '5', type: 'numeric', sortOrder: 4 },
+        { value: '8', displayValue: '8', type: 'numeric', sortOrder: 5 },
+        { value: '13', displayValue: '13', type: 'numeric', sortOrder: 6 },
+        { value: '?', displayValue: '?', type: 'special', sortOrder: 7 }
+    ],
+    isDefault: true,
+    createdBy: 'system',
+    lastModified: new Date().toISOString()
+};
+
+// Validate vote against scale
+const validateVote = (vote, scale) => {
+    if (!scale || !scale.values) return false;
+    return scale.values.some(v => v.value === vote);
+};
+
 const app = express();
 app.use(cors());
 
@@ -114,6 +138,7 @@ io.on('connection', (socket) => {
                 stories: [],
                 currentStory: null,
                 votes: new Map(),
+                votingScale: DEFAULT_SCALE,
                 createdAt: new Date().toISOString()
             });
 
@@ -274,6 +299,10 @@ io.on('connection', (socket) => {
                 callback?.({ success: false, message: 'Only host can reset voting' });
                 return;
             }
+            if (!room.currentStory) {
+                callback?.({ success: false, message: 'No active voting session' });
+                return;
+            }
 
             room.votes = new Map();
             room.currentStory = null;
@@ -303,14 +332,32 @@ io.on('connection', (socket) => {
     });
 
     // Reveal votes
-    socket.on('revealVotes', ({ roomId }) => {
-        const room = rooms.get(roomId);
-        if (room && room.host === userId) {
+    socket.on('revealVotes', ({ roomId }, callback) => {
+        try {
+            const room = rooms.get(roomId);
+            if (!room) {
+                callback?.({ success: false, message: 'Room not found' });
+                return;
+            }
+            if (room.host !== userId) {
+                callback?.({ success: false, message: 'Only host can reveal votes' });
+                return;
+            }
+            if (!room.currentStory) {
+                callback?.({ success: false, message: 'No active voting session' });
+                return;
+            }
+
             const votes = Array.from(room.votes.entries()).map(([voterId, vote]) => ({
                 user: room.users.find(u => u.userId === voterId),
                 vote
             }));
+
             io.to(roomId).emit('votesRevealed', { votes });
+            callback?.({ success: true });
+        } catch (error) {
+            console.error('Error in revealVotes handler:', error);
+            callback?.({ success: false, message: error.message });
         }
     });
 
@@ -328,6 +375,92 @@ io.on('connection', (socket) => {
                 saveRooms(rooms);
                 io.to(roomId).emit('votingCompleted', { stories: room.stories });
             }
+        }
+    });
+
+    // Get current voting scale
+    socket.on('getCurrentScale', ({ roomId }, callback) => {
+        try {
+            const room = rooms.get(roomId);
+            if (!room) {
+                callback?.({ success: false, message: 'Room not found' });
+                return;
+            }
+
+            callback?.({
+                success: true,
+                scale: room.votingScale || DEFAULT_SCALE
+            });
+        } catch (error) {
+            console.error('Error in getCurrentScale handler:', error);
+            callback?.({ success: false, message: error.message });
+        }
+    });
+
+    // Update voting scale (host only)
+    socket.on('updateScale', ({ roomId, scale }, callback) => {
+        try {
+            const room = rooms.get(roomId);
+            if (!room) {
+                callback?.({ success: false, message: 'Room not found' });
+                return;
+            }
+
+            if (room.host !== userId) {
+                callback?.({ success: false, message: 'Only host can update voting scale' });
+                return;
+            }
+
+            // Validate scale structure
+            if (!scale || !Array.isArray(scale.values) || scale.values.length === 0) {
+                callback?.({ success: false, message: 'Invalid scale format' });
+                return;
+            }
+
+            // Update room's voting scale
+            room.votingScale = {
+                ...scale,
+                lastModified: new Date().toISOString()
+            };
+
+            // Save rooms
+            rooms.set(roomId, room);
+            saveRooms(rooms);
+
+            // Notify all users in the room
+            io.to(roomId).emit('scaleUpdated', {
+                scale: room.votingScale,
+                updatedBy: userId,
+                timestamp: new Date().toISOString()
+            });
+
+            callback?.({ success: true, scale: room.votingScale });
+        } catch (error) {
+            console.error('Error in updateScale handler:', error);
+            callback?.({ success: false, message: error.message });
+        }
+    });
+
+    // Validate vote against current scale
+    socket.on('validateVote', ({ roomId, vote }, callback) => {
+        try {
+            const room = rooms.get(roomId);
+            if (!room) {
+                callback?.({ success: false, message: 'Room not found' });
+                return;
+            }
+
+            const scale = room.votingScale || DEFAULT_SCALE;
+            const isValid = validateVote(vote, scale);
+
+            callback?.({
+                success: true,
+                isValid,
+                allowedValues: scale.values
+            });
+        } catch (error) {
+            console.error('Error in validateVote handler:', error);
+            callback?.({ success: false, message: error.message });
         }
     });
 

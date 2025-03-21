@@ -8,27 +8,22 @@ import {
     Text,
     Button,
     Input,
-    Grid,
-    GridItem,
     useToast,
     Heading,
     Badge,
     List,
     ListItem,
     Flex,
-    Spacer,
-    Icon,
     Tooltip,
     ScaleFade,
-    Divider,
-    useClipboard,
     InputGroup,
     InputRightElement,
 } from '@chakra-ui/react';
-import { FaCopy, FaHome, FaPlay, FaEye, FaCheck, FaPlus } from 'react-icons/fa';
+import { FaHome, FaPlay, FaPlus } from 'react-icons/fa';
 import { socket } from '../socket';
-
-const FIBONACCI_SEQUENCE = ['1', '2', '3', '5', '8', '13', '21', '?'];
+import HostControls from './HostControls';
+import VotingSession from './VotingSession';
+import ErrorBoundary from './ErrorBoundary';
 
 function Room() {
     const { roomId } = useParams();
@@ -42,10 +37,10 @@ function Room() {
     const [votes, setVotes] = useState([]);
     const [votesRevealed, setVotesRevealed] = useState(false);
     const [isHost, setIsHost] = useState(false);
-    const { onCopy } = useClipboard(roomId);
+    const [currentHost, setCurrentHost] = useState(null);
+    const [currentScale, setCurrentScale] = useState(null);
 
     useEffect(() => {
-        // Get the user's name and ID from localStorage
         const userName = localStorage.getItem('userName') || 'Guest';
         const userId = localStorage.getItem('userId');
 
@@ -54,32 +49,47 @@ function Room() {
             return;
         }
 
-        // Setup all socket event listeners first
+        // Fetch current scale when component mounts
+        socket.emit('getCurrentScale', { roomId }, (response) => {
+            if (response.success) {
+                setCurrentScale(response.scale);
+            }
+        });
+
         const setupSocketListeners = () => {
             socket.on('userJoined', ({ users: updatedUsers, host }) => {
                 setUsers(updatedUsers);
-                setIsHost(host === userId);
+                setIsHost(host.id === userId);
+                setCurrentHost(host);
             });
 
             socket.on('userLeft', ({ users: updatedUsers, host }) => {
                 setUsers(updatedUsers);
-                setIsHost(host === userId);
+                setIsHost(host.id === userId);
+                setCurrentHost(host);
+            });
+
+            socket.on('hostTransferred', ({ oldHostId, newHostId }) => {
+                setIsHost(newHostId === userId);
+                const newHost = users.find(u => u.id === newHostId);
+                setCurrentHost(newHost);
+                toast({
+                    title: 'Host Transferred',
+                    description: `Host role transferred to ${newHost?.name}`,
+                    status: 'info',
+                    duration: 3000,
+                });
             });
 
             socket.on('storiesUpdated', ({ stories: updatedStories }) => {
-                console.log('Received storiesUpdated event:', updatedStories);
                 setStories(updatedStories);
             });
 
             socket.on('votingStarted', ({ storyId }) => {
-                console.log('Received votingStarted event:', { storyId });
                 setCurrentStory(storyId);
                 setVotesRevealed(false);
                 setVotes([]);
                 setSelectedVote(null);
-                console.log('Updated voting state:', { storyId });
-
-                // Force UI update by updating stories
                 setStories(prevStories => {
                     return prevStories.map(story => ({
                         ...story,
@@ -88,18 +98,45 @@ function Room() {
                 });
             });
 
-            socket.on('voteSubmitted', ({ totalVotes, userCount }) => {
+            socket.on('voteSubmitted', ({ totalVotes, userCount, lastVoteTime, userId: voterId }) => {
+                const voterName = users.find(u => u.id === voterId)?.name;
                 toast({
-                    title: 'Vote submitted',
+                    title: voterName ? `${voterName} voted` : 'Vote submitted',
                     description: `${totalVotes}/${userCount} votes received`,
                     status: 'info',
                     duration: 2000,
                 });
             });
 
-            socket.on('votesRevealed', ({ votes: revealedVotes }) => {
+            socket.on('voteUpdated', ({ userId: updatedUserId }) => {
+                const voterName = users.find(u => u.id === updatedUserId)?.name;
+                toast({
+                    title: 'Vote Updated',
+                    description: voterName ? `${voterName} updated their vote` : 'A vote was updated',
+                    status: 'info',
+                    duration: 2000,
+                });
+            });
+
+            socket.on('votesRevealed', ({ votes: revealedVotes, statistics }) => {
                 setVotes(revealedVotes);
                 setVotesRevealed(true);
+
+                if (statistics.consensus) {
+                    toast({
+                        title: 'Perfect Consensus!',
+                        description: `Everyone voted ${statistics.mode}`,
+                        status: 'success',
+                        duration: 3000,
+                    });
+                } else if (statistics.spread > 5) {
+                    toast({
+                        title: 'High Variance',
+                        description: 'Consider discussing the different perspectives',
+                        status: 'warning',
+                        duration: 3000,
+                    });
+                }
             });
 
             socket.on('votingCompleted', ({ stories: updatedStories }) => {
@@ -122,24 +159,28 @@ function Room() {
                     duration: 2000,
                 });
             });
+
+            socket.on('scaleUpdated', ({ scale }) => {
+                setCurrentScale(scale);
+            });
         };
 
-        // Clean up function to remove all listeners
         const cleanupSocketListeners = () => {
             socket.off('userJoined');
             socket.off('userLeft');
+            socket.off('hostTransferred');
             socket.off('storiesUpdated');
             socket.off('votingStarted');
             socket.off('voteSubmitted');
+            socket.off('voteUpdated');
             socket.off('votesRevealed');
             socket.off('votingCompleted');
             socket.off('votingReset');
+            socket.off('scaleUpdated');
         };
 
-        // Setup listeners and join room
         setupSocketListeners();
 
-        // Join room after setting up listeners
         socket.emit('joinRoom', { roomId, userName }, (response) => {
             if (!response.success) {
                 toast({
@@ -155,23 +196,19 @@ function Room() {
             setUsers(response.room.users);
             setStories(response.room.stories || []);
             setIsHost(response.room.isHost);
+            setCurrentHost(response.room.host);
 
-            // Set current story if there is one active
             if (response.room.currentStory) {
                 setCurrentStory(response.room.currentStory);
             }
         });
 
-        // Cleanup on component unmount
-        return () => {
-            cleanupSocketListeners();
-        };
-    }, [roomId, navigate, toast]);
+        return cleanupSocketListeners;
+    }, [roomId, navigate, toast, users]);
 
     const addStory = () => {
         if (!newStory.trim()) return;
 
-        // Optimistically add the story locally first
         const tempStory = {
             id: 'temp-' + Date.now(),
             title: newStory.trim(),
@@ -184,16 +221,13 @@ function Room() {
             story: { title: newStory.trim() }
         }, (response) => {
             if (response && response.success) {
-                setNewStory(''); // Clear input only on success
-
-                // Remove the temporary story since we'll get the real one from the server
+                setNewStory('');
                 setStories(prev => prev.filter(s => s.id !== tempStory.id));
             } else {
-                // Remove the temporary story if the server request failed
                 setStories(prev => prev.filter(s => s.id !== tempStory.id));
                 toast({
                     title: 'Error',
-                    description: response?.message || 'Failed to add story. Please try again.',
+                    description: response?.message || 'Failed to add story',
                     status: 'error',
                     duration: 3000,
                     isClosable: true,
@@ -210,11 +244,7 @@ function Room() {
     };
 
     const startVoting = (storyId) => {
-        console.log('Starting voting for story:', storyId);
-
-        // Check socket connection
-        if (!socket.connected) {
-            console.log('Socket not connected, attempting to reconnect...');
+        if (!socket.connected || !roomId || !storyId) {
             socket.connect();
             toast({
                 title: 'Connection Error',
@@ -226,22 +256,7 @@ function Room() {
             return;
         }
 
-        // Check if we have required data
-        if (!roomId || !storyId) {
-            console.error('Missing required data:', { roomId, storyId });
-            toast({
-                title: 'Error',
-                description: 'Missing required data to start voting',
-                status: 'error',
-                duration: 3000,
-                isClosable: true,
-            });
-            return;
-        }
-
-        console.log('Emitting startVoting event:', { roomId, storyId });
         socket.emit('startVoting', { roomId, storyId }, (response) => {
-            console.log('Received startVoting response:', response);
             if (!response || !response.success) {
                 toast({
                     title: 'Error',
@@ -250,20 +265,66 @@ function Room() {
                     duration: 3000,
                     isClosable: true,
                 });
-            } else {
+            }
+        });
+    };
+
+    const submitVote = (value) => {
+        if (!roomId) return;
+
+        setSelectedVote(value);
+        socket.emit('submitVote', { roomId, vote: value }, (response) => {
+            if (!response || !response.success) {
                 toast({
-                    title: 'Success',
-                    description: 'Voting started successfully',
-                    status: 'success',
-                    duration: 2000,
+                    title: 'Error',
+                    description: response?.message || 'Failed to submit vote',
+                    status: 'error',
+                    duration: 3000,
+                    isClosable: true,
                 });
-                // Force update UI state if needed
-                setCurrentStory(storyId);
+                // Revert selected vote on error
+                setSelectedVote(null);
+            }
+        });
+    };
+
+    const revealVotes = () => {
+        if (!currentStory) {
+            toast({
+                title: 'Error',
+                description: 'No active voting session',
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        socket.emit('revealVotes', { roomId }, (response) => {
+            if (!response || !response.success) {
+                toast({
+                    title: 'Error',
+                    description: response?.message || 'Failed to reveal votes',
+                    status: 'error',
+                    duration: 3000,
+                    isClosable: true,
+                });
             }
         });
     };
 
     const resetVoting = () => {
+        if (!currentStory) {
+            toast({
+                title: 'Error',
+                description: 'No active voting session',
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
         socket.emit('resetVoting', { roomId }, (response) => {
             if (!response || !response.success) {
                 toast({
@@ -277,31 +338,34 @@ function Room() {
         });
     };
 
-    const submitVote = (value) => {
-        setSelectedVote(value);
-        socket.emit('submitVote', { roomId, vote: value });
-    };
-
-    const revealVotes = () => {
-        socket.emit('revealVotes', { roomId });
-    };
-
     const completeVoting = () => {
         const average = calculateAverage();
         socket.emit('completeVoting', { roomId, finalEstimate: average });
     };
 
     const calculateAverage = () => {
+        if (!votes || votes.length === 0 || !currentScale) return '?';
+
         const numericVotes = votes
-            .map(v => v.vote)
+            .map(v => v?.vote || '?')
             .filter(v => v !== '?')
             .map(Number);
+
         if (numericVotes.length === 0) return '?';
+
         const avg = numericVotes.reduce((a, b) => a + b, 0) / numericVotes.length;
-        return FIBONACCI_SEQUENCE.reduce((prev, curr) => {
-            if (curr === '?') return prev;
-            return Math.abs(Number(curr) - avg) < Math.abs(Number(prev) - avg) ? curr : prev;
-        });
+
+        const numericValues = currentScale.values
+            .filter(v => v.type === 'numeric')
+            .map(v => Number(v.value));
+
+        if (numericValues.length === 0) return '?';
+
+        // Find the closest value in the scale
+        return numericValues.reduce((prev, curr) => {
+            if (!curr) return prev;
+            return Math.abs(curr - avg) < Math.abs(Number(prev) - avg) ? curr : prev;
+        }, numericValues[0]).toString();
     };
 
     return (
@@ -309,8 +373,8 @@ function Room() {
             <VStack spacing={8} align="stretch">
                 <ScaleFade in={true} initialScale={0.9}>
                     <Flex align="center" mb={6}>
-                        <Box>
-                            <HStack spacing={4}>
+                        <Box flex="1">
+                            <HStack spacing={4} mb={2}>
                                 <Heading
                                     size="lg"
                                     bgGradient="linear(to-r, blue.500, purple.500)"
@@ -323,17 +387,25 @@ function Room() {
                                     p={2}
                                     borderRadius="md"
                                     cursor="pointer"
-                                    onClick={onCopy}
+                                    onClick={() => {
+                                        const text = roomId;
+                                        navigator.clipboard.writeText(text);
+                                        toast({
+                                            title: 'Room ID copied',
+                                            description: 'Room ID has been copied to clipboard',
+                                            status: 'info',
+                                            duration: 3000,
+                                        });
+                                    }}
                                     _hover={{ opacity: 0.8 }}
                                 >
-                                    Room: {roomId} <Icon as={FaCopy} ml={2} />
+                                    Room: {roomId}
                                 </Badge>
                             </HStack>
-                            <Text mt={2} color="gray.600">
+                            <Text color="gray.600">
                                 Participants: {users.map(u => u.name).join(', ')}
                             </Text>
                         </Box>
-                        <Spacer />
                         <Button
                             leftIcon={<FaHome />}
                             colorScheme="gray"
@@ -343,6 +415,14 @@ function Room() {
                             Leave Room
                         </Button>
                     </Flex>
+
+                    {currentHost && (
+                        <HostControls
+                            currentHost={currentHost}
+                            participants={users}
+                            isCurrentUserHost={isHost}
+                        />
+                    )}
                 </ScaleFade>
 
                 {isHost && (
@@ -352,8 +432,6 @@ function Room() {
                         borderRadius="xl"
                         boxShadow="lg"
                         bg="white"
-                        transition="all 0.3s"
-                        _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
                     >
                         <Heading size="sm" mb={4}>Add New Story</Heading>
                         <InputGroup size="md">
@@ -380,109 +458,21 @@ function Room() {
                 )}
 
                 {currentStory && (
-                    <Box
-                        p={6}
-                        borderWidth={1}
-                        borderRadius="xl"
-                        boxShadow="lg"
-                        bg="white"
-                        transition="all 0.3s"
-                        _hover={{ transform: 'translateY(-2px)', boxShadow: 'xl' }}
-                    >
-                        <Heading size="sm" mb={6}>Current Voting Session</Heading>
-                        <Grid
-                            templateColumns="repeat(8, 1fr)"
-                            gap={4}
-                            mb={6}
-                        >
-                            {FIBONACCI_SEQUENCE.map((value) => (
-                                <GridItem key={value}>
-                                    <Button
-                                        onClick={() => submitVote(value)}
-                                        colorScheme={selectedVote === value ? 'blue' : 'gray'}
-                                        width="100%"
-                                        height="60px"
-                                        fontSize="xl"
-                                        isDisabled={votesRevealed}
-                                        _hover={!votesRevealed && { transform: 'translateY(-2px)' }}
-                                        transition="all 0.2s"
-                                    >
-                                        {value}
-                                    </Button>
-                                </GridItem>
-                            ))}
-                        </Grid>
-
-                        {isHost && (
-                            <HStack spacing={4} justify="center">
-                                <Button
-                                    onClick={revealVotes}
-                                    colorScheme="purple"
-                                    isDisabled={votesRevealed}
-                                    leftIcon={<FaEye />}
-                                    size="lg"
-                                >
-                                    Reveal Votes
-                                </Button>
-                                {votesRevealed && (
-                                    <Button
-                                        onClick={completeVoting}
-                                        colorScheme="green"
-                                        leftIcon={<FaCheck />}
-                                        size="lg"
-                                    >
-                                        Complete Voting
-                                    </Button>
-                                )}
-                                <Button
-                                    onClick={resetVoting}
-                                    colorScheme="red"
-                                    size="lg"
-                                >
-                                    Reset Voting
-                                </Button>
-                            </HStack>
-                        )}
-
-                        {votesRevealed && (
-                            <Box mt={6}>
-                                <Divider mb={4} />
-                                <Heading size="sm" mb={4}>Results</Heading>
-                                <Grid templateColumns="repeat(auto-fill, minmax(200px, 1fr))" gap={4}>
-                                    {votes.map((vote, index) => (
-                                        <Box
-                                            key={index}
-                                            p={4}
-                                            borderWidth={1}
-                                            borderRadius="lg"
-                                            bg="gray.50"
-                                        >
-                                            <Text fontWeight="bold">{vote.user.name}</Text>
-                                            <Badge
-                                                colorScheme="blue"
-                                                fontSize="xl"
-                                                p={2}
-                                                mt={2}
-                                            >
-                                                {vote.vote}
-                                            </Badge>
-                                        </Box>
-                                    ))}
-                                </Grid>
-                                <Box
-                                    mt={4}
-                                    p={4}
-                                    borderWidth={1}
-                                    borderRadius="lg"
-                                    bg="green.50"
-                                >
-                                    <Text fontWeight="bold" color="green.700">
-                                        Suggested Estimate: {calculateAverage()}
-                                    </Text>
-                                </Box>
-                            </Box>
-                        )}
-                    </Box>
+                    <ErrorBoundary>
+                        <VotingSession
+                            story={stories.find(s => s.id === currentStory)}
+                            roomId={roomId}
+                            selectedVote={selectedVote}
+                            votes={votes}
+                            votesRevealed={votesRevealed}
+                            isHost={isHost}
+                            users={users}
+                            onVote={submitVote}
+                            onReveal={revealVotes}
+                            onReset={resetVoting}
+                            onComplete={completeVoting}
+                        />
+                    </ErrorBoundary>
                 )}
 
                 <Box
@@ -552,4 +542,10 @@ function Room() {
     );
 }
 
-export default Room; 
+const RoomWithErrorBoundary = () => (
+    <ErrorBoundary>
+        <Room />
+    </ErrorBoundary>
+);
+
+export default RoomWithErrorBoundary; 
