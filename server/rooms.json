@@ -121,5 +121,109 @@
     "currentStory": "9342f6ed-9eaf-4b19-9958-56cfd2431ed5",
     "votes": {},
     "createdAt": "2025-03-20T17:51:35.898Z"
+  },
+  "994a06e5-9e6a-4844-9df2-fbcea25d03e4": {
+    "id": "994a06e5-9e6a-4844-9df2-fbcea25d03e4",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "dbluEZBpY6DYLmM_AAAF",
+    "users": [
+      {
+        "id": "dbluEZBpY6DYLmM_AAAF",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      },
+      {
+        "id": "8hV-vZ2jkoiOJ4DDAAAD",
+        "userId": "8d533168-c0d9-4061-9a34-683052e7c5a3",
+        "name": "Quangaaa"
+      }
+    ],
+    "stories": [
+      {
+        "title": "111",
+        "id": "281f0251-e40a-45e5-94eb-06aa273701be",
+        "status": "pending",
+        "createdAt": "2025-03-20T18:01:51.889Z"
+      }
+    ],
+    "currentStory": "281f0251-e40a-45e5-94eb-06aa273701be",
+    "votes": {},
+    "createdAt": "2025-03-20T18:01:44.961Z"
+  },
+  "c717e6ee-b9d8-4acf-b23b-6bbd1365d53a": {
+    "id": "c717e6ee-b9d8-4acf-b23b-6bbd1365d53a",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "QNYZ_AAGGttoJZdyAAAC",
+    "users": [
+      {
+        "id": "QNYZ_AAGGttoJZdyAAAC",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      }
+    ],
+    "stories": [
+      {
+        "title": "ádasd",
+        "id": "f4654f64-06cf-41f5-b0e0-06b25fa6fe42",
+        "status": "pending",
+        "createdAt": "2025-03-21T00:55:35.398Z"
+      }
+    ],
+    "currentStory": "f4654f64-06cf-41f5-b0e0-06b25fa6fe42",
+    "votes": {},
+    "createdAt": "2025-03-21T00:55:30.818Z"
+  },
+  "778a2980-5751-4681-affd-1a447624338c": {
+    "id": "778a2980-5751-4681-affd-1a447624338c",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "OaLZmhNMhgxxZ4qlAAAB",
+    "users": [
+      {
+        "id": "OaLZmhNMhgxxZ4qlAAAB",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      }
+    ],
+    "stories": [
+      {
+        "title": "123",
+        "id": "425a2bb9-6ae4-40ea-88f8-af6d7b5b6755",
+        "status": "pending",
+        "createdAt": "2025-03-21T01:00:46.237Z"
+      }
+    ],
+    "currentStory": "425a2bb9-6ae4-40ea-88f8-af6d7b5b6755",
+    "votes": {},
+    "createdAt": "2025-03-21T01:00:42.990Z"
+  },
+  "5f39e4a1-fe77-440c-9174-b91d326f71d0": {
+    "id": "5f39e4a1-fe77-440c-9174-b91d326f71d0",
+    "host": "mW71bxLqd6o",
+    "hostSocketId": "NaE-e2kp7wZzonBMAAAB",
+    "users": [
+      {
+        "id": "NaE-e2kp7wZzonBMAAAB",
+        "userId": "mW71bxLqd6o",
+        "name": "Host"
+      },
+      {
+        "id": "U4RvpU2AFibgVDkcAAAB",
+        "userId": null,
+        "name": "QQQ"
+      }
+    ],
+    "stories": [
+      {
+        "title": "123",
+        "id": "7c7d942c-8a7f-4866-8bb3-60e8ac5c6200",
+        "status": "pending",
+        "createdAt": "2025-03-21T01:02:44.169Z"
+      }
+    ],
+    "currentStory": "7c7d942c-8a7f-4866-8bb3-60e8ac5c6200",
+    "votes": {
+      "mW71bxLqd6o": "5"
+    },
+    "createdAt": "2025-03-21T01:02:39.111Z"
   }
 }

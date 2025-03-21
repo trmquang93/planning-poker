@@ -232,14 +232,59 @@ io.on('connection', (socket) => {
     });
 
     // Start voting on a story
-    socket.on('startVoting', ({ roomId, storyId }) => {
-        const room = rooms.get(roomId);
-        if (room && room.host === userId) {
+    socket.on('startVoting', ({ roomId, storyId }, callback) => {
+        console.log('Received startVoting event:', { roomId, storyId, userId: socket.userId });
+        try {
+            const room = rooms.get(roomId);
+            if (!room) {
+                console.log('Room not found:', roomId);
+                callback?.({ success: false, message: 'Room not found' });
+                return;
+            }
+            if (room.host !== userId) {
+                console.log('User not authorized:', { userId: socket.userId, host: room.host });
+                callback?.({ success: false, message: 'Only host can start voting' });
+                return;
+            }
+
+            console.log('Starting voting for room:', roomId);
             room.currentStory = storyId;
             room.votes = new Map();
             rooms.set(roomId, room);
             saveRooms(rooms);
+
+            console.log('Emitting votingStarted event to room');
             io.to(roomId).emit('votingStarted', { storyId });
+            callback?.({ success: true });
+        } catch (error) {
+            console.error('Error in startVoting handler:', error);
+            callback?.({ success: false, message: error.message });
+        }
+    });
+
+    // Reset voting
+    socket.on('resetVoting', ({ roomId }, callback) => {
+        try {
+            const room = rooms.get(roomId);
+            if (!room) {
+                callback?.({ success: false, message: 'Room not found' });
+                return;
+            }
+            if (room.host !== userId) {
+                callback?.({ success: false, message: 'Only host can reset voting' });
+                return;
+            }
+
+            room.votes = new Map();
+            room.currentStory = null;
+            rooms.set(roomId, room);
+            saveRooms(rooms);
+
+            io.to(roomId).emit('votingReset');
+            callback?.({ success: true });
+        } catch (error) {
+            console.error('Error in resetVoting handler:', error);
+            callback?.({ success: false, message: error.message });
         }
     });
 

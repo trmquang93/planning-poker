@@ -42,7 +42,7 @@ function Room() {
     const [votes, setVotes] = useState([]);
     const [votesRevealed, setVotesRevealed] = useState(false);
     const [isHost, setIsHost] = useState(false);
-    const { hasCopied, onCopy } = useClipboard(roomId);
+    const { onCopy } = useClipboard(roomId);
 
     useEffect(() => {
         // Get the user's name and ID from localStorage
@@ -69,25 +69,23 @@ function Room() {
             socket.on('storiesUpdated', ({ stories: updatedStories }) => {
                 console.log('Received storiesUpdated event:', updatedStories);
                 setStories(updatedStories);
-
-                // Show toast notification for new stories
-                const lastStory = updatedStories[updatedStories.length - 1];
-                if (lastStory && !stories.find(s => s.id === lastStory.id)) {
-                    toast({
-                        title: 'New Story Added',
-                        description: lastStory.title,
-                        status: 'success',
-                        duration: 2000,
-                        isClosable: true,
-                    });
-                }
             });
 
             socket.on('votingStarted', ({ storyId }) => {
+                console.log('Received votingStarted event:', { storyId });
                 setCurrentStory(storyId);
                 setVotesRevealed(false);
                 setVotes([]);
                 setSelectedVote(null);
+                console.log('Updated voting state:', { storyId });
+
+                // Force UI update by updating stories
+                setStories(prevStories => {
+                    return prevStories.map(story => ({
+                        ...story,
+                        isVoting: story.id === storyId
+                    }));
+                });
             });
 
             socket.on('voteSubmitted', ({ totalVotes, userCount }) => {
@@ -111,6 +109,19 @@ function Room() {
                 setVotesRevealed(false);
                 setSelectedVote(null);
             });
+
+            socket.on('votingReset', () => {
+                setCurrentStory(null);
+                setVotes([]);
+                setVotesRevealed(false);
+                setSelectedVote(null);
+                toast({
+                    title: 'Voting Reset',
+                    description: 'The voting session has been reset',
+                    status: 'info',
+                    duration: 2000,
+                });
+            });
         };
 
         // Clean up function to remove all listeners
@@ -122,6 +133,7 @@ function Room() {
             socket.off('voteSubmitted');
             socket.off('votesRevealed');
             socket.off('votingCompleted');
+            socket.off('votingReset');
         };
 
         // Setup listeners and join room
@@ -143,6 +155,11 @@ function Room() {
             setUsers(response.room.users);
             setStories(response.room.stories || []);
             setIsHost(response.room.isHost);
+
+            // Set current story if there is one active
+            if (response.room.currentStory) {
+                setCurrentStory(response.room.currentStory);
+            }
         });
 
         // Cleanup on component unmount
@@ -193,7 +210,71 @@ function Room() {
     };
 
     const startVoting = (storyId) => {
-        socket.emit('startVoting', { roomId, storyId });
+        console.log('Starting voting for story:', storyId);
+
+        // Check socket connection
+        if (!socket.connected) {
+            console.log('Socket not connected, attempting to reconnect...');
+            socket.connect();
+            toast({
+                title: 'Connection Error',
+                description: 'Trying to reconnect to server...',
+                status: 'warning',
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        // Check if we have required data
+        if (!roomId || !storyId) {
+            console.error('Missing required data:', { roomId, storyId });
+            toast({
+                title: 'Error',
+                description: 'Missing required data to start voting',
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+            });
+            return;
+        }
+
+        console.log('Emitting startVoting event:', { roomId, storyId });
+        socket.emit('startVoting', { roomId, storyId }, (response) => {
+            console.log('Received startVoting response:', response);
+            if (!response || !response.success) {
+                toast({
+                    title: 'Error',
+                    description: response?.message || 'Failed to start voting',
+                    status: 'error',
+                    duration: 3000,
+                    isClosable: true,
+                });
+            } else {
+                toast({
+                    title: 'Success',
+                    description: 'Voting started successfully',
+                    status: 'success',
+                    duration: 2000,
+                });
+                // Force update UI state if needed
+                setCurrentStory(storyId);
+            }
+        });
+    };
+
+    const resetVoting = () => {
+        socket.emit('resetVoting', { roomId }, (response) => {
+            if (!response || !response.success) {
+                toast({
+                    title: 'Error',
+                    description: response?.message || 'Failed to reset voting',
+                    status: 'error',
+                    duration: 3000,
+                    isClosable: true,
+                });
+            }
+        });
     };
 
     const submitVote = (value) => {
@@ -353,6 +434,13 @@ function Room() {
                                         Complete Voting
                                     </Button>
                                 )}
+                                <Button
+                                    onClick={resetVoting}
+                                    colorScheme="red"
+                                    size="lg"
+                                >
+                                    Reset Voting
+                                </Button>
                             </HStack>
                         )}
 
@@ -429,6 +517,16 @@ function Room() {
                                                 Final Estimate: {story.finalEstimate}
                                             </Badge>
                                         )}
+                                        {currentStory === story.id && (
+                                            <Badge
+                                                colorScheme="blue"
+                                                mt={2}
+                                                p={2}
+                                                borderRadius="md"
+                                            >
+                                                Voting in Progress
+                                            </Badge>
+                                        )}
                                     </Box>
                                     {isHost && story.status === 'pending' && (
                                         <Tooltip label="Start Voting" hasArrow>
@@ -440,7 +538,7 @@ function Room() {
                                                 leftIcon={<FaPlay />}
                                                 ml={4}
                                             >
-                                                Start
+                                                {currentStory === story.id ? 'Voting...' : 'Start'}
                                             </Button>
                                         </Tooltip>
                                     )}

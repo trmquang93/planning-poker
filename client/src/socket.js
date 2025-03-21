@@ -20,8 +20,16 @@ socket.on('connect', () => {
     console.log('Socket connected:', socket.id);
 });
 
-socket.on('disconnect', () => {
-    console.log('Socket disconnected');
+socket.on('disconnect', (reason) => {
+    console.log('Socket disconnected:', reason);
+});
+
+socket.on('reconnect', (attemptNumber) => {
+    console.log('Socket reconnected after', attemptNumber, 'attempts');
+});
+
+socket.on('reconnect_error', (error) => {
+    console.error('Socket reconnection error:', error);
 });
 
 socket.on('connect_error', (error) => {
