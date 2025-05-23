@@ -68,10 +68,8 @@ export const useSocket = () => {
         removeParticipant(data.participantId);
       });
 
-      // Story events
-      socketService.on(SocketEvents.STORY_ADDED, (data: { story: Story }) => {
-        addStory(data.story);
-      });
+      // Story events - STORY_ADDED handler removed to prevent duplication
+      // Stories are now handled only via SESSION_UPDATED events
 
       // Voting events
       socketService.on(SocketEvents.VOTING_STARTED, (data: { storyId: string }) => {

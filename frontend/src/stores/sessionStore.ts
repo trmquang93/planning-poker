@@ -109,6 +109,13 @@ export const useSessionStore = create<SessionState>()(
       addStory: (story) => set((state) => {
         if (!state.session) return {};
         
+        // Check if story already exists to prevent duplicates
+        const storyExists = state.session.stories.some(s => s.id === story.id);
+        if (storyExists) {
+          console.warn('Story already exists, skipping duplicate addition:', story.id);
+          return {}; // No state change if story already exists
+        }
+        
         return {
           session: {
             ...state.session,
@@ -199,6 +206,7 @@ export const useSessionStore = create<SessionState>()(
             return {
               ...story,
               finalEstimate: estimate,
+              status: 'completed' as const,
               completedAt: new Date(),
             };
           }

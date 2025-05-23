@@ -114,12 +114,8 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
           session: updatedSession,
         });
 
-        // Broadcast story added event
-        const addedStory = updatedSession.stories[updatedSession.stories.length - 1];
-        io.to(connection.sessionId).emit(SocketEvents.STORY_ADDED, {
-          story: addedStory,
-          sessionId: connection.sessionId,
-        });
+        // Note: No need to emit STORY_ADDED separately since SESSION_UPDATED 
+        // already contains the complete session with the new story
 
         console.info(`Story added to session ${connection.sessionId}:`, data.title);
       } catch (error) {
