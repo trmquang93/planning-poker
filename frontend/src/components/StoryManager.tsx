@@ -27,8 +27,12 @@ const StoryManager: React.FC<StoryManagerProps> = ({
   const [finalEstimate, setFinalEstimate] = useState<string | number>('');
 
   const isFacilitator = currentParticipant.role === 'facilitator';
-  const currentStory = session.stories.find(s => s.status === 'voting');
-  const revealedStory = session.stories.find(s => s.status === 'completed' && session.status === 'revealing');
+  const currentStory = session.currentStoryId 
+    ? session.stories.find(s => s.id === session.currentStoryId)
+    : null;
+  const revealedStory = session.status === 'revealing' && session.currentStoryId
+    ? session.stories.find(s => s.id === session.currentStoryId)
+    : null;
 
   const handleAddStory = (e: React.FormEvent) => {
     e.preventDefault();
