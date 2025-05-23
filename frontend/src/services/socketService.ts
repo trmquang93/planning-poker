@@ -182,6 +182,19 @@ class SocketService {
   }
 
   /**
+   * Start revoting on a completed story
+   */
+  public revoteStory(storyId: string): void {
+    if (!this.isConnected || !this.socket) {
+      throw new Error('Not connected to server');
+    }
+
+    this.socket.emit(SocketEvents.REVOTE_STORY, {
+      storyId,
+    });
+  }
+
+  /**
    * Add event listener
    */
   public on(event: string, callback: (...args: any[]) => void): void {
@@ -254,6 +267,7 @@ class SocketService {
       SocketEvents.VOTE_SUBMITTED,
       SocketEvents.VOTES_REVEALED,
       SocketEvents.FINAL_ESTIMATE_SET,
+      SocketEvents.REVOTE_STARTED,
       SocketEvents.ERROR,
     ];
 

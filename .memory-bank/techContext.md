@@ -93,6 +93,26 @@
 - End-to-end tests for critical user journeys
 - Minimum 80% code coverage requirement
 
+### Test Execution
+- **Automated Test Runner**: `/test-runner.sh` script for comprehensive testing
+- **Frontend Tests**: Vitest with `--run` flag to prevent watch mode
+- **Backend Tests**: Jest with `--silent --forceExit` flags for CI compatibility
+- **Test Commands**:
+  ```bash
+  # Run full test suite
+  ./test-runner.sh
+  
+  # Quick tests only (no builds)
+  ./test-runner.sh --quick
+  
+  # Individual package tests
+  cd frontend && npm test -- --run
+  cd backend && npm test -- --forceExit
+  cd shared && npm test
+  ```
+- **Watch Mode Prevention**: Always use `--run` flag for Vitest and `--forceExit` for Jest
+- **Jest Hanging Fix**: SessionService cleanup timer requires `afterAll(() => sessionService.stopCleanupTimer())`
+
 ### Deployment Pipeline
 - Automated testing on pull requests
 - Automatic deployment on main branch

@@ -386,6 +386,54 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
       }
     });
 
+    // Handle revoting
+    socket.on(SocketEvents.REVOTE_STORY, (data) => {
+      try {
+        const connection = socketToSession.get(socket.id);
+        if (!connection) {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'Not connected to any session',
+            code: 'NOT_IN_SESSION',
+          });
+          return;
+        }
+
+        // Start revoting using SessionService
+        const updatedSession = sessionService.revoteStory(
+          connection.sessionId,
+          connection.participantId,
+          data.storyId
+        );
+
+        if (!updatedSession) {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'Failed to start revoting',
+            code: 'REVOTE_FAILED',
+          });
+          return;
+        }
+
+        // Broadcast updated session to all participants
+        io.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {
+          session: updatedSession,
+        });
+
+        // Broadcast revote started event
+        io.to(connection.sessionId).emit(SocketEvents.REVOTE_STARTED, {
+          storyId: data.storyId,
+          sessionId: connection.sessionId,
+        });
+
+        console.info(`Revoting started for story ${data.storyId} in session ${connection.sessionId}`);
+      } catch (error) {
+        console.error('Error starting revote:', error);
+        socket.emit(SocketEvents.ERROR, {
+          message: error instanceof Error ? error.message : 'Failed to start revoting',
+          code: 'REVOTE_FAILED',
+        });
+      }
+    });
+
     // Handle disconnect
     socket.on('disconnect', async (reason) => {
       console.info(`Client disconnected: ${socket.id}, reason: ${reason}`);

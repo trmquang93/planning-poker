@@ -103,6 +103,14 @@ export const useSocket = () => {
         setFinalEstimate(data.storyId, data.estimate);
       });
 
+      socketService.on(SocketEvents.REVOTE_STARTED, (data: { storyId: string }) => {
+        const story = session?.stories.find(s => s.id === data.storyId);
+        if (story) {
+          setCurrentStory(story);
+          setVotingInProgress(true);
+        }
+      });
+
       // Error handling
       socketService.on(SocketEvents.ERROR, (data: { message: string; code?: string }) => {
         console.error('Socket error:', data);
@@ -232,6 +240,21 @@ export const useSocket = () => {
     }
   }, [clearError, setError]);
 
+  const revoteStory = useCallback((sessionId: string, storyId: string) => {
+    if (!socketService.connected) {
+      setError('Not connected to server');
+      return;
+    }
+
+    try {
+      socketService.revoteStory(storyId);
+      clearError();
+    } catch (error) {
+      console.error('Failed to start revoting:', error);
+      setError('Failed to start revoting');
+    }
+  }, [clearError, setError]);
+
   return {
     connected: socketService.connected,
     sessionId: socketService.currentSessionId,
@@ -246,5 +269,6 @@ export const useSocket = () => {
     submitVote,
     revealVotes: revealVotesAction,
     setFinalEstimate: setFinalEstimateAction,
+    revoteStory,
   };
 };

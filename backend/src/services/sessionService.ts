@@ -332,6 +332,50 @@ export class SessionService {
   }
 
   /**
+   * Start revoting for a completed story
+   */
+  public revoteStory(sessionId: string, facilitatorId: string, storyId: string): Session | null {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    // Verify facilitator permissions
+    const facilitator = session.participants.find(p => p.id === facilitatorId && p.role === 'facilitator');
+    if (!facilitator) {
+      throw new Error('Only facilitators can start revoting');
+    }
+
+    const story = session.stories.find(s => s.id === storyId);
+    if (!story) {
+      throw new Error('Story not found');
+    }
+
+    if (story.status !== 'completed') {
+      throw new Error('Can only revote on completed stories');
+    }
+
+    // Check if there's already an active voting session
+    const activeVotingStory = session.stories.find(s => s.status === 'voting');
+    if (activeVotingStory) {
+      throw new Error('Another story is currently being voted on');
+    }
+
+    // Reset votes and set status to voting
+    story.votes = {};
+    story.status = 'voting';
+    story.finalEstimate = undefined;
+    story.completedAt = undefined;
+
+    session.status = 'voting';
+    session.currentStoryId = storyId;
+    session.updatedAt = new Date();
+    sessions.set(sessionId, session);
+
+    return session;
+  }
+
+  /**
    * Submit a vote for the current story
    */
   public submitVote(sessionId: string, participantId: string, storyId: string, vote: any): Session | null {

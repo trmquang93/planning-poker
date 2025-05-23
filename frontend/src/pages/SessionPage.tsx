@@ -40,7 +40,8 @@ const SessionPage = () => {
     startVoting, 
     submitVote, 
     revealVotes, 
-    setFinalEstimate 
+    setFinalEstimate,
+    revoteStory
   } = useSocket();
 
   // Initialize session data
@@ -155,6 +156,12 @@ const SessionPage = () => {
   const handleFinalizeEstimate = (storyId: string, estimate: EstimationValue) => {
     if (session) {
       setFinalEstimate(session.id, storyId, estimate);
+    }
+  };
+
+  const handleRevoteStory = (storyId: string) => {
+    if (session) {
+      revoteStory(session.id, storyId);
     }
   };
 
@@ -351,6 +358,7 @@ const SessionPage = () => {
                 onStartVoting={handleStartVoting}
                 onRevealVotes={handleRevealVotes}
                 onFinalizeEstimate={handleFinalizeEstimate}
+                onRevoteStory={handleRevoteStory}
               />
             </div>
           </div>

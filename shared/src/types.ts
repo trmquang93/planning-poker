@@ -91,6 +91,7 @@ export const SocketEvents = {
   SUBMIT_VOTE: 'submit_vote',
   REVEAL_VOTES: 'reveal_votes',
   SET_FINAL_ESTIMATE: 'set_final_estimate',
+  REVOTE_STORY: 'revote_story',
   NEXT_STORY: 'next_story',
   
   // Server to client
@@ -102,6 +103,7 @@ export const SocketEvents = {
   VOTE_SUBMITTED: 'vote_submitted',
   VOTES_REVEALED: 'votes_revealed',
   FINAL_ESTIMATE_SET: 'final_estimate_set',
+  REVOTE_STARTED: 'revote_started',
   ERROR: 'error',
 } as const;
 

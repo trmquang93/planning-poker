@@ -80,6 +80,7 @@ describe('StoryManager - Story Duplication Bug', () => {
         onStartVoting={vi.fn()}
         onRevealVotes={vi.fn()}
         onFinalizeEstimate={vi.fn()}
+        onRevoteStory={vi.fn()}
       />
     );
 
@@ -112,6 +113,7 @@ describe('StoryManager - Story Duplication Bug', () => {
         onStartVoting={vi.fn()}
         onRevealVotes={vi.fn()}
         onFinalizeEstimate={vi.fn()}
+        onRevoteStory={vi.fn()}
       />
     );
 

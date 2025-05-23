@@ -11,6 +11,7 @@ interface StoryManagerProps {
   onStartVoting: (storyId: string) => void;
   onRevealVotes: (storyId: string) => void;
   onFinalizeEstimate: (storyId: string, estimate: string | number) => void;
+  onRevoteStory: (storyId: string) => void;
 }
 
 const StoryManager: React.FC<StoryManagerProps> = ({
@@ -20,6 +21,7 @@ const StoryManager: React.FC<StoryManagerProps> = ({
   onStartVoting,
   onRevealVotes,
   onFinalizeEstimate,
+  onRevoteStory,
 }) => {
   const [isAddingStory, setIsAddingStory] = useState(false);
   const [newStoryTitle, setNewStoryTitle] = useState('');
@@ -270,13 +272,26 @@ const StoryManager: React.FC<StoryManagerProps> = ({
                 )}
               </div>
               
-              {isFacilitator && story.status === 'pending' && !currentStory && (
-                <button
-                  onClick={() => onStartVoting(story.id)}
-                  className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors text-sm"
-                >
-                  Start Voting
-                </button>
+              {isFacilitator && (
+                <div className="flex gap-2">
+                  {story.status === 'pending' && !currentStory && (
+                    <button
+                      onClick={() => onStartVoting(story.id)}
+                      className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      Start Voting
+                    </button>
+                  )}
+                  {story.status === 'completed' && !currentStory && story.finalEstimate && (
+                    <button
+                      onClick={() => onRevoteStory(story.id)}
+                      className="bg-orange-600 text-white px-3 py-1 rounded-md hover:bg-orange-700 transition-colors text-sm"
+                      title="Start revoting on this story"
+                    >
+                      🔄 Revote
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>

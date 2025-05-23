@@ -10,8 +10,17 @@
       "Bash(npm install)",
       "Bash(npm test:*)",
       "Bash(grep:*)",
-      "Bash(node test-voting.js)"
+      "Bash(node test-voting.js)",
+      "Bash(npx jest:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npx tsc:*)",
+      "Bash(.:*)",
+      "Bash(rg:*)",
+      "Bash(find:*)"
     ],
-    "deny": []
+    "deny": [
+      "Bash(rm:*)"
+    ]
   }
 }
