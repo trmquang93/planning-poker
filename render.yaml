@@ -3,7 +3,7 @@ services:
     name: planning-poker-backend
     runtime: node
     plan: free
-    buildCommand: cd shared && npm ci --ignore-scripts && npm run build && cd ../backend && npm ci --ignore-scripts && npm run build
+    buildCommand: cd shared && npm ci && npm run build && cd ../backend && npm ci && npm run build:prod
     startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
