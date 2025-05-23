@@ -1,5 +1,5 @@
-import type { EstimationValue, SessionSummary, ExportData } from './types.js';
-import { ESTIMATION_SCALES } from './types.js';
+import type { EstimationValue, SessionSummary, ExportData } from './types';
+import { ESTIMATION_SCALES } from './types';
 
 // Utility functions for estimation calculations
 export const calculateAverage = (votes: EstimationValue[]): number | null => {

@@ -1,6 +1,6 @@
 // Export all types and schemas
-export * from './types.js';
-export * from './utils.js';
+export * from './types';
+export * from './utils';
 
 // Re-export commonly used items for convenience
 export {
@@ -9,7 +9,7 @@ export {
   SessionStatus,
   StoryStatus,
   ParticipantRole,
-} from './types.js';
+} from './types';
 
 export {
   generateSessionCode,
@@ -24,4 +24,4 @@ export {
   formatDuration,
   isSessionExpired,
   getSessionExpiryTime,
-} from './utils.js';
+} from './utils';

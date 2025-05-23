@@ -53,6 +53,12 @@
     ],
     "coverageDirectory": "coverage",
     "coverageReporters": ["text", "lcov", "html"],
-    "setupFilesAfterEnv": ["<rootDir>/tests/setup.ts"]
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.ts"],
+    "moduleNameMapping": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(.*\\.mjs$))"
+    ]
   }
 }
