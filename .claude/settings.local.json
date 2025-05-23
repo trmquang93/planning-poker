@@ -17,7 +17,11 @@
       "Bash(npx tsc:*)",
       "Bash(.:*)",
       "Bash(rg:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [
       "Bash(rm:*)"
