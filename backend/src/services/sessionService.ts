@@ -1,8 +1,9 @@
-import type { Session, Participant, CreateSessionRequest, JoinSessionRequest } from '@shared/types';
+import type { Session, Participant, CreateSessionRequest, JoinSessionRequest, Story } from '@shared/types';
 import { 
   generateSessionId, 
   generateSessionCode, 
   generateParticipantId,
+  generateStoryId,
   getSessionExpiryTime,
   isSessionExpired 
 } from '@shared/utils';
@@ -260,6 +261,175 @@ export class SessionService {
       clearInterval(this.cleanupTimer);
       this.cleanupTimer = null;
     }
+  }
+
+  /**
+   * Add a new story to the session
+   */
+  public addStory(sessionId: string, facilitatorId: string, title: string, description?: string): Session | null {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    // Verify facilitator permissions
+    const facilitator = session.participants.find(p => p.id === facilitatorId && p.role === 'facilitator');
+    if (!facilitator) {
+      throw new Error('Only facilitators can add stories');
+    }
+
+    const storyId = generateStoryId();
+    const story: Story = {
+      id: storyId,
+      title: title.trim(),
+      description: description?.trim(),
+      status: 'pending',
+      votes: {},
+      finalEstimate: undefined,
+      createdAt: new Date(),
+    };
+
+    session.stories.push(story);
+    session.updatedAt = new Date();
+    sessions.set(sessionId, session);
+
+    return session;
+  }
+
+  /**
+   * Start voting for a story
+   */
+  public startVoting(sessionId: string, facilitatorId: string, storyId: string): Session | null {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    // Verify facilitator permissions
+    const facilitator = session.participants.find(p => p.id === facilitatorId && p.role === 'facilitator');
+    if (!facilitator) {
+      throw new Error('Only facilitators can start voting');
+    }
+
+    const story = session.stories.find(s => s.id === storyId);
+    if (!story) {
+      throw new Error('Story not found');
+    }
+
+    // Reset votes and set status to voting
+    story.votes = {};
+    story.status = 'voting';
+    story.finalEstimate = undefined;
+
+    session.status = 'voting';
+    session.updatedAt = new Date();
+    sessions.set(sessionId, session);
+
+    return session;
+  }
+
+  /**
+   * Submit a vote for the current story
+   */
+  public submitVote(sessionId: string, participantId: string, storyId: string, vote: any): Session | null {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    const participant = session.participants.find(p => p.id === participantId);
+    if (!participant) {
+      throw new Error('Participant not found');
+    }
+
+    const story = session.stories.find(s => s.id === storyId);
+    if (!story) {
+      throw new Error('Story not found');
+    }
+
+    if (story.status !== 'voting') {
+      throw new Error('Voting is not active for this story');
+    }
+
+    // Store the vote
+    story.votes[participant.name] = vote;
+    session.updatedAt = new Date();
+    sessions.set(sessionId, session);
+
+    return session;
+  }
+
+  /**
+   * Reveal votes for a story
+   */
+  public revealVotes(sessionId: string, facilitatorId: string, storyId: string): Session | null {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    // Verify facilitator permissions
+    const facilitator = session.participants.find(p => p.id === facilitatorId && p.role === 'facilitator');
+    if (!facilitator) {
+      throw new Error('Only facilitators can reveal votes');
+    }
+
+    const story = session.stories.find(s => s.id === storyId);
+    if (!story) {
+      throw new Error('Story not found');
+    }
+
+    if (story.status !== 'voting') {
+      throw new Error('Voting is not active for this story');
+    }
+
+    story.status = 'completed';
+    session.status = 'revealing';
+    session.updatedAt = new Date();
+    sessions.set(sessionId, session);
+
+    return session;
+  }
+
+  /**
+   * Finalize estimate for a story
+   */
+  public finalizeEstimate(sessionId: string, facilitatorId: string, storyId: string, finalEstimate: any): Session | null {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    // Verify facilitator permissions
+    const facilitator = session.participants.find(p => p.id === facilitatorId && p.role === 'facilitator');
+    if (!facilitator) {
+      throw new Error('Only facilitators can finalize estimates');
+    }
+
+    const story = session.stories.find(s => s.id === storyId);
+    if (!story) {
+      throw new Error('Story not found');
+    }
+
+    story.finalEstimate = finalEstimate;
+    story.status = 'completed';
+    session.status = 'waiting'; // Return to waiting state
+    session.updatedAt = new Date();
+    sessions.set(sessionId, session);
+
+    return session;
+  }
+
+  /**
+   * Get current active story (if any)
+   */
+  public getCurrentStory(sessionId: string): Story | null {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    return session.stories.find(s => s.status === 'voting') || null;
   }
 
   /**

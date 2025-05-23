@@ -155,7 +155,7 @@ export const useSocket = () => {
     socketService.leaveSession();
   }, []);
 
-  const addStoryAction = useCallback((title: string, description?: string) => {
+  const addStoryAction = useCallback((sessionId: string, title: string, description?: string) => {
     if (!socketService.connected) {
       setError('Not connected to server');
       return;
@@ -170,7 +170,7 @@ export const useSocket = () => {
     }
   }, [clearError, setError]);
 
-  const startVoting = useCallback((storyId: string) => {
+  const startVoting = useCallback((sessionId: string, storyId: string) => {
     if (!socketService.connected) {
       setError('Not connected to server');
       return;
@@ -185,7 +185,7 @@ export const useSocket = () => {
     }
   }, [clearError, setError]);
 
-  const submitVote = useCallback((storyId: string, vote: string | number) => {
+  const submitVote = useCallback((sessionId: string, storyId: string, vote: string | number) => {
     if (!socketService.connected) {
       setError('Not connected to server');
       return;
@@ -200,7 +200,7 @@ export const useSocket = () => {
     }
   }, [clearError, setError]);
 
-  const revealVotesAction = useCallback((storyId: string) => {
+  const revealVotesAction = useCallback((sessionId: string, storyId: string) => {
     if (!socketService.connected) {
       setError('Not connected to server');
       return;
@@ -215,7 +215,7 @@ export const useSocket = () => {
     }
   }, [clearError, setError]);
 
-  const setFinalEstimateAction = useCallback((storyId: string, estimate: string | number) => {
+  const setFinalEstimateAction = useCallback((sessionId: string, storyId: string, estimate: string | number) => {
     if (!socketService.connected) {
       setError('Not connected to server');
       return;

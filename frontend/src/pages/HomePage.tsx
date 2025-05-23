@@ -1,21 +1,80 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSessionStore } from '../stores/sessionStore';
+import { apiService } from '../services/apiService';
 
 const HomePage = () => {
   const [sessionCode, setSessionCode] = useState('');
   const [participantName, setParticipantName] = useState('');
+  const [facilitatorName, setFacilitatorName] = useState('');
+  const [sessionTitle, setSessionTitle] = useState('');
+  const [scale, setScale] = useState<'FIBONACCI' | 'T_SHIRT' | 'POWERS_OF_2'>('FIBONACCI');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  
   const navigate = useNavigate();
+  const { isCreating, isJoining, error, setIsCreating, setIsJoining, setError, clearError } = useSessionStore();
 
-  const handleCreateSession = () => {
-    // TODO: Implement session creation
-    console.log('Creating session...');
-    navigate('/session/demo-session');
+  const handleCreateSession = async () => {
+    if (!facilitatorName.trim() || !sessionTitle.trim()) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    setIsCreating(true);
+    clearError();
+
+    try {
+      const response = await apiService.createSession({
+        title: sessionTitle.trim(),
+        facilitatorName: facilitatorName.trim(),
+        scale,
+      });
+
+      // Navigate to the session page with the session data
+      navigate(`/session/${response.session.id}`, {
+        state: {
+          session: response.session,
+          participantId: response.participantId,
+          isCreator: true,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      setError(error instanceof Error ? error.message : 'Failed to create session');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleJoinSession = () => {
-    // TODO: Implement session joining
-    console.log('Joining session:', sessionCode, 'as', participantName);
-    navigate(`/session/${sessionCode.toLowerCase()}`);
+  const handleJoinSession = async () => {
+    if (!sessionCode.trim() || !participantName.trim()) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    setIsJoining(true);
+    clearError();
+
+    try {
+      const response = await apiService.joinSession({
+        sessionCode: sessionCode.trim().toUpperCase(),
+        participantName: participantName.trim(),
+      });
+
+      // Navigate to the session page with the session data
+      navigate(`/session/${response.session.id}`, {
+        state: {
+          session: response.session,
+          participantId: response.participantId,
+          isCreator: false,
+        },
+      });
+    } catch (error) {
+      console.error('Failed to join session:', error);
+      setError(error instanceof Error ? error.message : 'Failed to join session');
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   return (
@@ -30,18 +89,75 @@ const HomePage = () => {
           </p>
         </div>
 
+        {error && (
+          <div className="card bg-error-50 border-error-200">
+            <p className="text-error-800 text-sm">{error}</p>
+            <button 
+              onClick={clearError}
+              className="text-error-600 hover:text-error-800 text-xs mt-2"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+
         <div className="space-y-6">
           {/* Create Session */}
           <div className="card">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Create New Session
             </h2>
-            <button
-              onClick={handleCreateSession}
-              className="btn-primary w-full"
-            >
-              Create Session
-            </button>
+            {!showCreateForm ? (
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="btn-primary w-full"
+              >
+                Create Session
+              </button>
+            ) : (
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Session Title (e.g., Sprint Planning)"
+                  value={sessionTitle}
+                  onChange={(e) => setSessionTitle(e.target.value)}
+                  className="input"
+                  maxLength={100}
+                />
+                <input
+                  type="text"
+                  placeholder="Your Name (Facilitator)"
+                  value={facilitatorName}
+                  onChange={(e) => setFacilitatorName(e.target.value)}
+                  className="input"
+                  maxLength={50}
+                />
+                <select
+                  value={scale}
+                  onChange={(e) => setScale(e.target.value as any)}
+                  className="input"
+                >
+                  <option value="FIBONACCI">Fibonacci (1, 2, 3, 5, 8, 13...)</option>
+                  <option value="T_SHIRT">T-Shirt (XS, S, M, L, XL...)</option>
+                  <option value="POWERS_OF_2">Powers of 2 (1, 2, 4, 8, 16...)</option>
+                </select>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => setShowCreateForm(false)}
+                    className="btn-outline flex-1"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateSession}
+                    disabled={isCreating || !sessionTitle.trim() || !facilitatorName.trim()}
+                    className="btn-primary flex-1"
+                  >
+                    {isCreating ? 'Creating...' : 'Create'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Join Session */}
@@ -68,10 +184,10 @@ const HomePage = () => {
               />
               <button
                 onClick={handleJoinSession}
-                disabled={!sessionCode || !participantName}
+                disabled={isJoining || !sessionCode || !participantName}
                 className="btn-primary w-full"
               >
-                Join Session
+                {isJoining ? 'Joining...' : 'Join Session'}
               </button>
             </div>
           </div>

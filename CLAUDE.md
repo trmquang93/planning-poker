@@ -79,3 +79,5 @@ When multiple modules are loaded, they automatically integrate through these con
    ```
 
 The framework automatically detects which modules are loaded and adjusts its behavior accordingly, maintaining consistency regardless of which combination is used.
+
+**REMEMBER**: For this project I will run the code in seperated terminal windows. Don't try try to run the code yorself. Tell me if I need to restart the application. The application should be active all the time.

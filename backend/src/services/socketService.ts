@@ -93,29 +93,31 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
           return;
         }
 
-        const session = sessionService.getSession(connection.sessionId);
-        if (!session) {
+        // Add story using SessionService
+        const updatedSession = sessionService.addStory(
+          connection.sessionId,
+          connection.participantId,
+          data.title,
+          data.description
+        );
+
+        if (!updatedSession) {
           socket.emit(SocketEvents.ERROR, {
-            message: 'Session not found',
-            code: 'SESSION_NOT_FOUND',
+            message: 'Failed to add story',
+            code: 'ADD_STORY_FAILED',
           });
           return;
         }
 
-        // Check if participant is facilitator
-        const participant = session.participants.find(p => p.id === connection.participantId);
-        if (!participant || participant.role !== 'facilitator') {
-          socket.emit(SocketEvents.ERROR, {
-            message: 'Only facilitators can add stories',
-            code: 'INSUFFICIENT_PERMISSIONS',
-          });
-          return;
-        }
+        // Broadcast updated session to all participants
+        io.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {
+          session: updatedSession,
+        });
 
-        // TODO: Implement story addition in SessionService
-        // For now, just broadcast the event
+        // Broadcast story added event
+        const addedStory = updatedSession.stories[updatedSession.stories.length - 1];
         io.to(connection.sessionId).emit(SocketEvents.STORY_ADDED, {
-          story: data,
+          story: addedStory,
           sessionId: connection.sessionId,
         });
 
@@ -123,7 +125,7 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
       } catch (error) {
         console.error('Error adding story:', error);
         socket.emit(SocketEvents.ERROR, {
-          message: 'Failed to add story',
+          message: error instanceof Error ? error.message : 'Failed to add story',
           code: 'ADD_STORY_FAILED',
         });
       }
@@ -141,26 +143,27 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
           return;
         }
 
-        const session = sessionService.getSession(connection.sessionId);
-        if (!session) {
+        // Start voting using SessionService
+        const updatedSession = sessionService.startVoting(
+          connection.sessionId,
+          connection.participantId,
+          data.storyId
+        );
+
+        if (!updatedSession) {
           socket.emit(SocketEvents.ERROR, {
-            message: 'Session not found',
-            code: 'SESSION_NOT_FOUND',
+            message: 'Failed to start voting',
+            code: 'START_VOTING_FAILED',
           });
           return;
         }
 
-        // Check if participant is facilitator
-        const participant = session.participants.find(p => p.id === connection.participantId);
-        if (!participant || participant.role !== 'facilitator') {
-          socket.emit(SocketEvents.ERROR, {
-            message: 'Only facilitators can start voting',
-            code: 'INSUFFICIENT_PERMISSIONS',
-          });
-          return;
-        }
+        // Broadcast updated session to all participants
+        io.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {
+          session: updatedSession,
+        });
 
-        // Broadcast voting start to all participants
+        // Broadcast voting start event
         io.to(connection.sessionId).emit(SocketEvents.VOTING_STARTED, {
           storyId: data.storyId,
           sessionId: connection.sessionId,
@@ -170,7 +173,7 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
       } catch (error) {
         console.error('Error starting voting:', error);
         socket.emit(SocketEvents.ERROR, {
-          message: 'Failed to start voting',
+          message: error instanceof Error ? error.message : 'Failed to start voting',
           code: 'START_VOTING_FAILED',
         });
       }
@@ -188,20 +191,41 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
           return;
         }
 
-        // TODO: Store vote in SessionService
-        // For now, just notify facilitators that a vote was submitted
-        socket.to(connection.sessionId).emit(SocketEvents.VOTE_SUBMITTED, {
-          participantId: connection.participantId,
-          storyId: data.storyId,
-          hasVoted: true, // Don't reveal the actual vote
-          sessionId: connection.sessionId,
-        });
+        // Submit vote using SessionService
+        const updatedSession = sessionService.submitVote(
+          connection.sessionId,
+          connection.participantId,
+          data.storyId,
+          data.vote
+        );
+
+        if (!updatedSession) {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'Failed to submit vote',
+            code: 'SUBMIT_VOTE_FAILED',
+          });
+          return;
+        }
+
+        // Get current story to check voting progress
+        const currentStory = updatedSession.stories.find(s => s.id === data.storyId);
+        if (currentStory) {
+          // Notify all participants about vote submission (without revealing the vote)
+          io.to(connection.sessionId).emit(SocketEvents.VOTE_SUBMITTED, {
+            participantId: connection.participantId,
+            storyId: data.storyId,
+            hasVoted: true,
+            voteCount: Object.keys(currentStory.votes).length,
+            totalParticipants: updatedSession.participants.length,
+            sessionId: connection.sessionId,
+          });
+        }
 
         console.info(`Vote submitted by ${connection.participantId} for story ${data.storyId}`);
       } catch (error) {
         console.error('Error submitting vote:', error);
         socket.emit(SocketEvents.ERROR, {
-          message: 'Failed to submit vote',
+          message: error instanceof Error ? error.message : 'Failed to submit vote',
           code: 'SUBMIT_VOTE_FAILED',
         });
       }
@@ -219,30 +243,40 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
           return;
         }
 
-        const session = sessionService.getSession(connection.sessionId);
-        if (!session) {
+        // Reveal votes using SessionService
+        const updatedSession = sessionService.revealVotes(
+          connection.sessionId,
+          connection.participantId,
+          data.storyId
+        );
+
+        if (!updatedSession) {
           socket.emit(SocketEvents.ERROR, {
-            message: 'Session not found',
-            code: 'SESSION_NOT_FOUND',
+            message: 'Failed to reveal votes',
+            code: 'REVEAL_VOTES_FAILED',
           });
           return;
         }
 
-        // Check if participant is facilitator
-        const participant = session.participants.find(p => p.id === connection.participantId);
-        if (!participant || participant.role !== 'facilitator') {
+        // Get the story with revealed votes
+        const story = updatedSession.stories.find(s => s.id === data.storyId);
+        if (!story) {
           socket.emit(SocketEvents.ERROR, {
-            message: 'Only facilitators can reveal votes',
-            code: 'INSUFFICIENT_PERMISSIONS',
+            message: 'Story not found',
+            code: 'STORY_NOT_FOUND',
           });
           return;
         }
 
-        // TODO: Get actual votes from SessionService
-        // For now, broadcast reveal event
+        // Broadcast updated session to all participants
+        io.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {
+          session: updatedSession,
+        });
+
+        // Broadcast votes revealed event with actual votes
         io.to(connection.sessionId).emit(SocketEvents.VOTES_REVEALED, {
           storyId: data.storyId,
-          votes: data.votes || {}, // Placeholder
+          votes: story.votes,
           sessionId: connection.sessionId,
         });
 
@@ -250,7 +284,7 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
       } catch (error) {
         console.error('Error revealing votes:', error);
         socket.emit(SocketEvents.ERROR, {
-          message: 'Failed to reveal votes',
+          message: error instanceof Error ? error.message : 'Failed to reveal votes',
           code: 'REVEAL_VOTES_FAILED',
         });
       }
@@ -268,27 +302,28 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
           return;
         }
 
-        const session = sessionService.getSession(connection.sessionId);
-        if (!session) {
+        // Finalize estimate using SessionService
+        const updatedSession = sessionService.finalizeEstimate(
+          connection.sessionId,
+          connection.participantId,
+          data.storyId,
+          data.estimate
+        );
+
+        if (!updatedSession) {
           socket.emit(SocketEvents.ERROR, {
-            message: 'Session not found',
-            code: 'SESSION_NOT_FOUND',
+            message: 'Failed to set final estimate',
+            code: 'SET_ESTIMATE_FAILED',
           });
           return;
         }
 
-        // Check if participant is facilitator
-        const participant = session.participants.find(p => p.id === connection.participantId);
-        if (!participant || participant.role !== 'facilitator') {
-          socket.emit(SocketEvents.ERROR, {
-            message: 'Only facilitators can set final estimates',
-            code: 'INSUFFICIENT_PERMISSIONS',
-          });
-          return;
-        }
+        // Broadcast updated session to all participants
+        io.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {
+          session: updatedSession,
+        });
 
-        // TODO: Store final estimate in SessionService
-        // For now, broadcast the event
+        // Broadcast final estimate set event
         io.to(connection.sessionId).emit(SocketEvents.FINAL_ESTIMATE_SET, {
           storyId: data.storyId,
           estimate: data.estimate,
@@ -299,7 +334,7 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
       } catch (error) {
         console.error('Error setting final estimate:', error);
         socket.emit(SocketEvents.ERROR, {
-          message: 'Failed to set final estimate',
+          message: error instanceof Error ? error.message : 'Failed to set final estimate',
           code: 'SET_ESTIMATE_FAILED',
         });
       }
