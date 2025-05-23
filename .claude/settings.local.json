@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__server-sequential-thinking__sequentialthinking",
+      "Bash(mkdir:*)",
+      "Bash(npm run build:*)",
+      "Bash(mv:*)",
+      "Bash(npm run type-check:*)"
+    ],
+    "deny": []
+  }
+}
