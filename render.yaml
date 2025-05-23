@@ -3,21 +3,25 @@ services:
     name: planning-poker-backend
     runtime: node
     plan: free
-    buildCommand: cd backend && npm ci && npm run build
+    buildCommand: cd shared && npm ci --ignore-scripts && npm run build && cd ../backend && npm ci --ignore-scripts && npm run build
     startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
+      - key: FRONTEND_URL
+        value: https://planning-poker-frontend-ac8h.onrender.com
     
   - type: web
     name: planning-poker-frontend
     runtime: static
     plan: free
     rootDir: frontend
-    buildCommand: npm ci && npm run build
+    buildCommand: cd ../shared && npm ci --ignore-scripts && npm run build && cd ../frontend && npm ci --ignore-scripts && npm run build
     staticPublishPath: dist
     envVars:
       - key: VITE_BACKEND_URL
-        value: https://planning-poker-backend.onrender.com
+        value: https://planning-poker-backend-ac8h.onrender.com
+      - key: VITE_SOCKET_URL
+        value: https://planning-poker-backend-ac8h.onrender.com

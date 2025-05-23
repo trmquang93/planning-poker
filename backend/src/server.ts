@@ -16,7 +16,7 @@ const server = createServer(app);
 // CORS configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://planning-poker-frontend.vercel.app'] // Replace with actual production domain
+    ? [process.env.FRONTEND_URL || 'https://planning-poker-frontend-ac8h.onrender.com']
     : ['http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
