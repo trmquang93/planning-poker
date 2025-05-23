@@ -150,9 +150,9 @@ const SessionPage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading session...</p>
         </div>
       </div>
@@ -161,10 +161,13 @@ const SessionPage = () => {
 
   if (!session || !currentParticipant) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Session not found</p>
-          <button onClick={() => navigate('/')} className="btn-primary">
+          <button 
+            onClick={() => navigate('/')} 
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+          >
             Go Home
           </button>
         </div>
@@ -174,10 +177,10 @@ const SessionPage = () => {
 
   const getConnectionStatusColor = () => {
     switch (connectionStatus) {
-      case 'connected': return 'bg-success-500';
+      case 'connected': return 'bg-green-500';
       case 'connecting': 
-      case 'reconnecting': return 'bg-warning-500';
-      default: return 'bg-error-500';
+      case 'reconnecting': return 'bg-yellow-500';
+      default: return 'bg-red-500';
     }
   };
 
@@ -203,12 +206,12 @@ const SessionPage = () => {
                 {session.title}
               </h1>
               <div className="flex items-center space-x-2">
-                <span className="badge-secondary">
+                <span className="bg-gray-100 text-gray-800 px-2.5 py-0.5 text-xs font-medium rounded-full">
                   Code: {session.code}
                 </span>
                 <button
                   onClick={copySessionCode}
-                  className="text-xs text-primary-600 hover:text-primary-800"
+                  className="text-xs text-blue-600 hover:text-blue-800"
                 >
                   Copy
                 </button>
@@ -223,7 +226,7 @@ const SessionPage = () => {
               </div>
               <button
                 onClick={handleLeaveSession}
-                className="btn-outline text-sm"
+                className="border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md transition-colors text-sm"
               >
                 Leave Session
               </button>
@@ -233,12 +236,12 @@ const SessionPage = () => {
       </header>
 
       {error && (
-        <div className="bg-error-50 border-b border-error-200 px-4 py-3">
+        <div className="bg-red-50 border-b border-red-200 px-4 py-3">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <p className="text-error-800 text-sm">{error}</p>
+            <p className="text-red-800 text-sm">{error}</p>
             <button 
               onClick={clearError}
-              className="text-error-600 hover:text-error-800 text-xs"
+              className="text-red-600 hover:text-red-800 text-xs"
             >
               Dismiss
             </button>
@@ -254,14 +257,14 @@ const SessionPage = () => {
             <SessionSummary session={session} />
             
             {/* Participants */}
-            <div className="card">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">
                   Participants ({session.participants.length})
                 </h2>
                 <button
                   onClick={copySessionLink}
-                  className="text-xs text-primary-600 hover:text-primary-800"
+                  className="text-xs text-blue-600 hover:text-blue-800"
                 >
                   Invite Link
                 </button>
@@ -274,12 +277,12 @@ const SessionPage = () => {
                     key={participant.id}
                     className={`flex items-center justify-between p-3 rounded-lg ${
                       participant.id === currentParticipant.id 
-                        ? 'bg-primary-50 border border-primary-200' 
+                        ? 'bg-blue-50 border border-blue-200' 
                         : 'bg-gray-50'
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-success-500 rounded-full" />
+                      <div className="w-2 h-2 bg-green-500 rounded-full" />
                       <span className="text-sm font-medium text-gray-900">
                         {participant.name}
                         {participant.id === currentParticipant.id && ' (You)'}
@@ -287,7 +290,7 @@ const SessionPage = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       {participant.role === 'facilitator' && (
-                        <span className="badge-primary text-xs">Facilitator</span>
+                        <span className="bg-blue-100 text-blue-800 px-2.5 py-0.5 text-xs font-medium rounded-full">Facilitator</span>
                       )}
                     </div>
                   </div>
@@ -311,8 +314,8 @@ const SessionPage = () => {
               </div>
 
               {session.participants.length === 1 && (
-                <div className="mt-4 p-3 bg-warning-50 border border-warning-200 rounded-lg">
-                  <p className="text-warning-800 text-sm">
+                <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-yellow-800 text-sm">
                     Share the session code <strong>{session.code}</strong> with your team members to get started.
                   </p>
                 </div>
