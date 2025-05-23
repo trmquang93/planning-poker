@@ -5,6 +5,7 @@ import { useSocket } from '../hooks/useSocket';
 import { apiService } from '../services/apiService';
 import StoryManager from '../components/StoryManager';
 import VotingInterface from '../components/VotingInterface';
+import SessionSummary from '../components/SessionSummary';
 import type { Session, Participant, EstimationValue } from '@shared/types';
 
 interface LocationState {
@@ -247,8 +248,12 @@ const SessionPage = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Participants */}
-          <div className="lg:col-span-1">
+          {/* Participants & Summary */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Session Summary */}
+            <SessionSummary session={session} />
+            
+            {/* Participants */}
             <div className="card">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">

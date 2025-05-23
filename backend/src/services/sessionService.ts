@@ -5,7 +5,9 @@ import {
   generateParticipantId,
   generateStoryId,
   getSessionExpiryTime,
-  isSessionExpired 
+  isSessionExpired,
+  analyzeVotes,
+  suggestEstimate
 } from '@shared/utils';
 
 // In-memory storage for sessions
@@ -430,6 +432,42 @@ export class SessionService {
     }
 
     return session.stories.find(s => s.status === 'voting') || null;
+  }
+
+  /**
+   * Get vote analysis for a story
+   */
+  public getVoteAnalysis(sessionId: string, storyId: string): any {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    const story = session.stories.find(s => s.id === storyId);
+    if (!story) {
+      return null;
+    }
+
+    const votes = Object.values(story.votes);
+    return analyzeVotes(votes, session.scale);
+  }
+
+  /**
+   * Get suggested estimate for a story
+   */
+  public getSuggestedEstimate(sessionId: string, storyId: string): any {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    const story = session.stories.find(s => s.id === storyId);
+    if (!story || Object.keys(story.votes).length === 0) {
+      return null;
+    }
+
+    const votes = Object.values(story.votes);
+    return suggestEstimate(votes, session.scale);
   }
 
   /**

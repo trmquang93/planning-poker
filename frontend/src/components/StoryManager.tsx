@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import type { Session, Story, Participant } from '@shared/types';
 import { ESTIMATION_SCALES } from '@shared/types';
+import { analyzeVotes } from '@shared/utils';
+import VoteAnalysis from './VoteAnalysis';
 
 interface StoryManagerProps {
   session: Session;
@@ -176,27 +178,57 @@ const StoryManager: React.FC<StoryManagerProps> = ({
             </div>
           </div>
 
+          {/* Vote Analysis */}
+          <VoteAnalysis
+            session={session}
+            story={revealedStory}
+            isVisible={true}
+          />
+
           {isFacilitator && (
-            <div className="flex items-center gap-2">
-              <select
-                value={finalEstimate}
-                onChange={(e) => setFinalEstimate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-              >
-                <option value="">Select final estimate...</option>
-                {ESTIMATION_SCALES[session.scale].map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={() => handleFinalizeEstimate(revealedStory)}
-                disabled={!finalEstimate}
-                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                Finalize
-              </button>
+            <div className="mt-4">
+              {/* Smart Suggestions */}
+              {(() => {
+                const analysis = analyzeVotes(Object.values(revealedStory.votes), session.scale);
+                return analysis.suggestion && (
+                  <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="text-sm text-blue-800">
+                      <strong>💡 Suggested Estimate:</strong> {analysis.suggestion}
+                    </div>
+                    <div className="text-xs text-blue-600 mt-1">
+                      {analysis.analysis}
+                    </div>
+                    <button
+                      onClick={() => setFinalEstimate(String(analysis.suggestion))}
+                      className="mt-2 text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Use Suggestion
+                    </button>
+                  </div>
+                );
+              })()}
+              
+              <div className="flex items-center gap-2">
+                <select
+                  value={finalEstimate}
+                  onChange={(e) => setFinalEstimate(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Select final estimate...</option>
+                  {ESTIMATION_SCALES[session.scale].map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={() => handleFinalizeEstimate(revealedStory)}
+                  disabled={!finalEstimate}
+                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Finalize
+                </button>
+              </div>
             </div>
           )}
         </div>
