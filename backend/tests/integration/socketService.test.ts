@@ -52,11 +52,11 @@ describe('Socket.IO Integration', () => {
     });
 
     // Create test session
-    const sessionResult = sessionService.createSession('Test Session', 'Facilitator', 'FIBONACCI');
+    const sessionResult = sessionService.createSession({ title: 'Test Session', facilitatorName: 'Facilitator', scale: 'FIBONACCI' });
     testSession = sessionResult.session;
     
     // Add a member to the session
-    const memberResult = sessionService.addParticipant(testSession.id, 'Member', 'member');
+    sessionService.joinSession({ sessionCode: testSession.code, participantName: 'Member' });
     testSession = sessionService.getSession(testSession.id);
   });
 

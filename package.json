@@ -22,6 +22,9 @@
     "type-check": "npm run type-check:frontend && npm run type-check:backend",
     "type-check:frontend": "cd frontend && npm run type-check",
     "type-check:backend": "cd backend && npm run type-check",
+    "deploy": "npm run deploy:backend && npm run deploy:frontend",
+    "deploy:frontend": "cd frontend && npm run deploy",
+    "deploy:backend": "cd backend && railway up",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "clean": "rm -rf node_modules frontend/node_modules backend/node_modules frontend/dist backend/dist",
     "prepare": "husky install"

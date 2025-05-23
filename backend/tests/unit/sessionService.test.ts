@@ -183,7 +183,7 @@ describe('SessionService', () => {
 
   describe('Story Management', () => {
     beforeEach(() => {
-      const result = sessionService.createSession('Test Session', 'Test Facilitator', 'FIBONACCI');
+      const result = sessionService.createSession({ title: 'Test Session', facilitatorName: 'Test Facilitator', scale: 'FIBONACCI' });
       testSession = result.session;
       facilitator.id = result.participantId;
     });
@@ -204,7 +204,7 @@ describe('SessionService', () => {
     });
 
     it('should only allow facilitators to add stories', () => {
-      const memberResult = sessionService.addParticipant(testSession.id, 'Test Member', 'member');
+      const memberResult = sessionService.joinSession({ sessionCode: testSession.code, participantName: 'Test Member' });
       
       expect(() => {
         sessionService.addStory(testSession.id, memberResult.participantId, 'Test Story');
@@ -222,12 +222,12 @@ describe('SessionService', () => {
     let storyId: string;
 
     beforeEach(() => {
-      const result = sessionService.createSession('Test Session', 'Test Facilitator', 'FIBONACCI');
+      const result = sessionService.createSession({ title: 'Test Session', facilitatorName: 'Test Facilitator', scale: 'FIBONACCI' });
       testSession = result.session;
       facilitator.id = result.participantId;
 
       // Add a member
-      const memberResult = sessionService.addParticipant(testSession.id, 'Test Member', 'member');
+      const memberResult = sessionService.joinSession({ sessionCode: testSession.code, participantName: 'Test Member' });
       member.id = memberResult.participantId;
 
       // Add a story
@@ -322,7 +322,7 @@ describe('SessionService', () => {
   describe('Error Handling', () => {
     it('should handle non-existent session operations gracefully', () => {
       expect(() => {
-        sessionService.addParticipant('non-existent', 'Test', 'member');
+        sessionService.joinSession({ sessionCode: 'NON_EXISTENT', participantName: 'Test' });
       }).toThrow('Session not found');
 
       expect(() => {
@@ -331,7 +331,7 @@ describe('SessionService', () => {
     });
 
     it('should handle non-existent story operations gracefully', () => {
-      const result = sessionService.createSession('Test', 'Facilitator', 'FIBONACCI');
+      const result = sessionService.createSession({ title: 'Test', facilitatorName: 'Facilitator', scale: 'FIBONACCI' });
 
       expect(() => {
         sessionService.startVoting(result.session.id, result.participantId, 'non-existent-story');
@@ -339,7 +339,7 @@ describe('SessionService', () => {
     });
 
     it('should handle non-existent participant operations gracefully', () => {
-      const result = sessionService.createSession('Test', 'Facilitator', 'FIBONACCI');
+      const result = sessionService.createSession({ title: 'Test', facilitatorName: 'Facilitator', scale: 'FIBONACCI' });
 
       expect(() => {
         sessionService.addStory(result.session.id, 'non-existent-user', 'Test Story');
