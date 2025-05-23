@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: planning-poker-backend
+    runtime: node
+    plan: free
+    buildCommand: cd backend && npm ci && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    
+  - type: web
+    name: planning-poker-frontend
+    runtime: static
+    plan: free
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_BACKEND_URL
+        value: https://planning-poker-backend.onrender.com

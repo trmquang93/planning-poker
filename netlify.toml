@@ -1,0 +1,16 @@
+[build]
+  publish = "frontend/dist"
+  command = "cd frontend && npm ci && npm run build"
+
+[build.environment]
+  NODE_VERSION = "18"
+  VITE_BACKEND_URL = "https://planning-poker-backend.onrender.com"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[functions]
+  directory = "backend/netlify/functions"
+  node_bundler = "esbuild"
