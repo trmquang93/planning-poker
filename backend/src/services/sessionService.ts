@@ -324,6 +324,7 @@ export class SessionService {
     story.finalEstimate = undefined;
 
     session.status = 'voting';
+    session.currentStoryId = storyId; // Set current story being voted on
     session.updatedAt = new Date();
     sessions.set(sessionId, session);
 
@@ -416,6 +417,7 @@ export class SessionService {
     story.finalEstimate = finalEstimate;
     story.status = 'completed';
     session.status = 'waiting'; // Return to waiting state
+    session.currentStoryId = undefined; // Clear current story
     session.updatedAt = new Date();
     sessions.set(sessionId, session);
 

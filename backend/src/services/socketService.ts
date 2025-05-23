@@ -207,15 +207,65 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
           return;
         }
 
-        // Get current story to check voting progress
-        const currentStory = updatedSession.stories.find(s => s.id === data.storyId);
-        if (currentStory) {
-          // Notify all participants about vote submission (without revealing the vote)
+        // Send personalized session updates to each participant
+        try {
+          const currentStory = updatedSession.stories.find(s => s.id === data.storyId);
+          if (currentStory) {
+            // Send to each participant individually with their own vote visible
+            updatedSession.participants.forEach(participant => {
+              try {
+                const participantSockets = [...socketToSession.entries()]
+                  .filter(([, connection]) => 
+                    connection.sessionId === updatedSession.id && 
+                    connection.participantId === participant.id
+                  )
+                  .map(([socketId]) => socketId);
+
+                if (participantSockets.length > 0) {
+                  // Create personalized session for this participant
+                  const personalizedSession = {
+                    ...updatedSession,
+                    stories: updatedSession.stories.map(story => {
+                      if (story.id === data.storyId && story.status === 'voting') {
+                        // Show this participant's own vote, hide others
+                        const personalizedVotes: Record<string, string | number> = {};
+                        Object.entries(story.votes).forEach(([voterName, vote]) => {
+                          if (voterName === participant.name) {
+                            personalizedVotes[voterName] = vote; // Show own vote
+                          } else {
+                            personalizedVotes[voterName] = '***'; // Hide others' votes
+                          }
+                        });
+                        return {
+                          ...story,
+                          votes: personalizedVotes,
+                        };
+                      }
+                      return story;
+                    })
+                  };
+
+                  // Send to this participant's sockets
+                  participantSockets.forEach(socketId => {
+                    io.to(socketId).emit(SocketEvents.SESSION_UPDATED, {
+                      session: personalizedSession,
+                    });
+                  });
+                }
+              } catch (participantError) {
+                console.error(`Error sending personalized update to participant ${participant.id}:`, participantError);
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Error creating personalized session updates:', error);
+          // Fallback: send basic vote count update without revealing votes
+          const fallbackStory = updatedSession.stories.find(s => s.id === data.storyId);
           io.to(connection.sessionId).emit(SocketEvents.VOTE_SUBMITTED, {
             participantId: connection.participantId,
             storyId: data.storyId,
             hasVoted: true,
-            voteCount: Object.keys(currentStory.votes).length,
+            voteCount: fallbackStory ? Object.keys(fallbackStory.votes).length : 0,
             totalParticipants: updatedSession.participants.length,
             sessionId: connection.sessionId,
           });

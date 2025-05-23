@@ -30,6 +30,8 @@ const HomePage = () => {
         scale,
       });
 
+      console.log('Session created:', response);
+      
       // Navigate to the session page with the session data
       navigate(`/session/${response.session.id}`, {
         state: {
@@ -38,6 +40,8 @@ const HomePage = () => {
           isCreator: true,
         },
       });
+      
+      console.log('Navigating to session page');
     } catch (error) {
       console.error('Failed to create session:', error);
       setError(error instanceof Error ? error.message : 'Failed to create session');

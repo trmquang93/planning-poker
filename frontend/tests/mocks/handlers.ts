@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 
 export const handlers = [
   // Health check endpoint
-  http.get('/api/sessions/health', () => {
+  http.get('http://localhost:3001/api/sessions/health', () => {
     return HttpResponse.json({
       message: 'Session API is healthy',
       timestamp: new Date().toISOString(),
@@ -10,7 +10,7 @@ export const handlers = [
   }),
 
   // Create session endpoint
-  http.post('/api/sessions/create', async ({ request }) => {
+  http.post('http://localhost:3001/api/sessions/create', async ({ request }) => {
     const body = await request.json() as any;
     return HttpResponse.json({
       session: {
@@ -38,7 +38,7 @@ export const handlers = [
   }),
 
   // Join session endpoint
-  http.post('/api/sessions/join', async ({ request }) => {
+  http.post('http://localhost:3001/api/sessions/join', async ({ request }) => {
     const body = await request.json() as any;
     return HttpResponse.json({
       session: {

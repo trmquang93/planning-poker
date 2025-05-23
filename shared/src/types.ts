@@ -105,9 +105,20 @@ export const SocketEvents = {
   ERROR: 'error',
 } as const;
 
+// Special schema for socket events that handles serialized dates
+export const ParticipantEventSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1).max(50),
+  role: ParticipantRole,
+  isOnline: z.boolean(),
+  joinedAt: z.union([z.date(), z.string()]).transform((val) => 
+    typeof val === 'string' ? new Date(val) : val
+  ),
+});
+
 export const JoinSessionEventSchema = z.object({
   sessionId: z.string(),
-  participant: ParticipantSchema,
+  participant: ParticipantEventSchema,
 });
 
 export const ErrorEventSchema = z.object({

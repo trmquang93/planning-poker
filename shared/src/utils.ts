@@ -266,9 +266,11 @@ export const exportToText = (summary: SessionSummary): ExportData => {
 };
 
 // Time utilities
-export const formatDuration = (start: Date, end?: Date): string => {
-  const endTime = end || new Date();
-  const diffMs = endTime.getTime() - start.getTime();
+export const formatDuration = (start: Date | string, end?: Date | string): string => {
+  const startTime = start instanceof Date ? start : new Date(start);
+  const endTime = end ? (end instanceof Date ? end : new Date(end)) : new Date();
+  
+  const diffMs = endTime.getTime() - startTime.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMins / 60);
   
@@ -279,12 +281,14 @@ export const formatDuration = (start: Date, end?: Date): string => {
   }
 };
 
-export const isSessionExpired = (expiresAt: Date): boolean => {
-  return new Date() > expiresAt;
+export const isSessionExpired = (expiresAt: Date | string): boolean => {
+  const expiry = expiresAt instanceof Date ? expiresAt : new Date(expiresAt);
+  return new Date() > expiry;
 };
 
-export const getSessionExpiryTime = (createdAt: Date, hoursToExpire: number = 2): Date => {
-  const expiryTime = new Date(createdAt);
+export const getSessionExpiryTime = (createdAt: Date | string, hoursToExpire: number = 2): Date => {
+  const startTime = createdAt instanceof Date ? createdAt : new Date(createdAt);
+  const expiryTime = new Date(startTime);
   expiryTime.setHours(expiryTime.getHours() + hoursToExpire);
   return expiryTime;
 };

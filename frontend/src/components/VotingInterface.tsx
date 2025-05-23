@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import type { Session, Participant, EstimationValue } from '@shared/types';
 import { ESTIMATION_SCALES } from '@shared/types';
 
@@ -14,17 +14,26 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
   onSubmitVote,
 }) => {
   const [selectedVote, setSelectedVote] = useState<EstimationValue | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const currentStory = session.stories.find(s => s.status === 'voting');
+  const currentStory = session.currentStoryId 
+    ? session.stories.find(s => s.id === session.currentStoryId)
+    : null;
   const hasVoted = currentStory ? currentParticipant.name in currentStory.votes : false;
   const myVote = currentStory ? currentStory.votes[currentParticipant.name] : null;
 
-  const handleVoteSubmit = (vote: EstimationValue) => {
-    if (currentStory) {
-      setSelectedVote(vote);
-      onSubmitVote(currentStory.id, vote);
+  const handleVoteSubmit = useCallback((vote: EstimationValue) => {
+    if (isSubmitting || !currentStory || hasVoted) {
+      return; // Prevent double submission or submission when already voted
     }
-  };
+    
+    setIsSubmitting(true);
+    setSelectedVote(vote);
+    onSubmitVote(currentStory.id, vote);
+    
+    // Reset submitting state after a short delay
+    setTimeout(() => setIsSubmitting(false), 1000);
+  }, [isSubmitting, currentStory, hasVoted, onSubmitVote]);
 
   const estimationValues = ESTIMATION_SCALES[session.scale];
 
@@ -84,12 +93,15 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
             <button
               key={value}
               onClick={() => handleVoteSubmit(value)}
+              disabled={isSubmitting}
               className={`
                 aspect-square p-4 border-2 rounded-lg font-semibold text-lg
                 transition-all duration-200 hover:scale-105 active:scale-95
-                ${selectedVote === value 
-                  ? 'border-blue-500 bg-blue-500 text-white shadow-lg' 
-                  : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
+                ${isSubmitting 
+                  ? 'border-gray-300 bg-gray-200 text-gray-500 cursor-not-allowed'
+                  : selectedVote === value 
+                    ? 'border-blue-500 bg-blue-500 text-white shadow-lg' 
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
                 }
               `}
             >

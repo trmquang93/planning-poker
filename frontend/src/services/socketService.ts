@@ -19,16 +19,18 @@ class SocketService {
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.socket && this.isConnected) {
+        console.info('Already connected to socket');
         resolve();
         return;
       }
 
       const serverUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
+      console.info('Attempting to connect to socket server:', serverUrl);
       
       this.socket = io(serverUrl, {
-        transports: ['websocket', 'polling'],
+        transports: ['polling'],
         timeout: 10000,
-        retries: 3,
+        forceNew: true,
       });
 
       this.socket.on('connect', () => {
@@ -39,7 +41,8 @@ class SocketService {
       });
 
       this.socket.on('connect_error', (error) => {
-        console.error('Connection error:', error);
+        console.error('Socket connection error:', error);
+        console.error('Error details:', error.message);
         this.isConnected = false;
         reject(error);
       });

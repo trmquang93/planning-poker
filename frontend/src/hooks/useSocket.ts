@@ -25,27 +25,12 @@ export const useSocket = () => {
 
   const isInitialized = useRef(false);
 
-  // Initialize socket connection
+  // Initialize socket connection - but don't auto-connect
   useEffect(() => {
     if (isInitialized.current) return;
     isInitialized.current = true;
 
-    const initializeSocket = async () => {
-      try {
-        setConnectionStatus('connecting');
-        await socketService.connect();
-        setConnectionStatus('connected');
-        clearError();
-      } catch (error) {
-        console.error('Failed to connect to server:', error);
-        setConnectionStatus('disconnected');
-        setError('Failed to connect to server. Please check your connection.');
-      }
-    };
-
-    initializeSocket();
-
-    // Set up event listeners
+    // Set up event listeners immediately
     const setupEventListeners = () => {
       // Connection events
       socketService.on('connection_lost', () => {
@@ -136,6 +121,25 @@ export const useSocket = () => {
   }, []);
 
   // Socket action wrappers
+  const connectAndJoinSession = useCallback(async (sessionId: string, participant: Participant) => {
+    try {
+      setConnectionStatus('connecting');
+      clearError();
+      
+      // Connect to socket first
+      await socketService.connect();
+      setConnectionStatus('connected');
+      
+      // Then join the session
+      socketService.joinSession(sessionId, participant);
+      clearError();
+    } catch (error) {
+      console.error('Failed to connect and join session:', error);
+      setConnectionStatus('disconnected');
+      setError('Failed to connect to server. Please check your connection.');
+    }
+  }, [clearError, setError, setConnectionStatus]);
+
   const joinSession = useCallback((sessionId: string, participant: Participant) => {
     if (!socketService.connected) {
       setError('Not connected to server');
@@ -236,6 +240,7 @@ export const useSocket = () => {
     participantId: socketService.currentParticipantId,
     
     // Actions
+    connectAndJoinSession,
     joinSession,
     leaveSession,
     addStory: addStoryAction,

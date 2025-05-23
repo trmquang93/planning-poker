@@ -19,6 +19,7 @@ const SessionPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [hasJoinedSocket, setHasJoinedSocket] = useState(false);
   
   const {
     session,
@@ -33,7 +34,7 @@ const SessionPage = () => {
 
   const { 
     connected, 
-    joinSession, 
+    connectAndJoinSession, 
     leaveSession, 
     addStory, 
     startVoting, 
@@ -53,11 +54,17 @@ const SessionPage = () => {
         
         if (state?.session && state?.participantId) {
           // We have session data from navigation
+          console.log('Setting session from navigation state:', state.session);
+          console.log('Participant ID:', state.participantId);
           setSession(state.session);
           
           const participant = state.session.participants.find(p => p.id === state.participantId);
+          console.log('Found participant:', participant);
           if (participant) {
             setCurrentParticipant(participant);
+          } else {
+            console.error('Participant not found in session');
+            setError('Participant not found in session');
           }
         } else if (sessionId) {
           // Fetch session data from API
@@ -85,22 +92,25 @@ const SessionPage = () => {
     initializeSession();
   }, [sessionId, location.state, navigate, setSession, setCurrentParticipant, setError, clearError]);
 
-  // Join WebSocket session when connected
+  // Connect and join WebSocket session when session and participant are ready
   useEffect(() => {
-    if (connected && session && currentParticipant && !isLoading) {
-      joinSession(session.id, currentParticipant);
+    if (session && currentParticipant && !isLoading && !hasJoinedSocket) {
+      connectAndJoinSession(session.id, currentParticipant);
+      setHasJoinedSocket(true);
     }
-  }, [connected, session, currentParticipant, isLoading, joinSession]);
+  }, [session, currentParticipant, isLoading, hasJoinedSocket, connectAndJoinSession]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       leaveSession();
+      setHasJoinedSocket(false);
     };
   }, [leaveSession]);
 
   const handleLeaveSession = () => {
     leaveSession();
+    setHasJoinedSocket(false);
     navigate('/', { replace: true });
   };
 
