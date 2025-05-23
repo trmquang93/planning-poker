@@ -15,8 +15,9 @@ services:
     name: planning-poker-frontend
     runtime: static
     plan: free
-    buildCommand: cd frontend && npm ci && npm run build
-    staticPublishPath: frontend/dist
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
     envVars:
       - key: VITE_BACKEND_URL
         value: https://planning-poker-backend.onrender.com

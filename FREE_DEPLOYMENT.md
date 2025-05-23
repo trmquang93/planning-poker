@@ -14,10 +14,10 @@
    - **Name**: `planning-poker-backend`
    - **Region**: Choose closest to you
    - **Branch**: `main`
-   - **Root Directory**: `backend`
+   - **Root Directory**: Leave empty (use project root)
    - **Runtime**: `Node`
-   - **Build Command**: `npm ci && npm run build`
-   - **Start Command**: `npm start`
+   - **Build Command**: `cd backend && npm ci && npm run build`
+   - **Start Command**: `cd backend && npm start`
    - **Plan**: Select **Free**
 
 6. Environment Variables:
