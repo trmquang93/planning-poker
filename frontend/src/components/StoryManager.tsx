@@ -174,11 +174,13 @@ const StoryManager: React.FC<StoryManagerProps> = ({
           
           <div className="mb-4">
             <h5 className="font-medium text-gray-800 mb-2">Votes:</h5>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
               {Object.entries(revealedStory.votes).map(([participant, vote]) => (
-                <div key={participant} className="flex justify-between">
+                <div key={participant} className="flex items-center gap-2">
                   <span className="text-gray-600">{participant}:</span>
-                  <span className="font-medium">{vote}</span>
+                  <span className="font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded-md">
+                    {vote}
+                  </span>
                 </div>
               ))}
             </div>
@@ -266,8 +268,15 @@ const StoryManager: React.FC<StoryManagerProps> = ({
                   <p className="text-gray-600 text-sm mb-2">{story.description}</p>
                 )}
                 {story.status === 'completed' && Object.keys(story.votes).length > 0 && (
-                  <div className="text-xs text-gray-500">
-                    Votes: {Object.entries(story.votes).map(([p, v]) => `${p}: ${v}`).join(', ')}
+                  <div className="text-xs text-gray-500 mt-2">
+                    <span className="font-medium">Votes:</span>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {Object.entries(story.votes).map(([p, v]) => (
+                        <span key={p} className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-xs">
+                          {p}: {v}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

@@ -71,21 +71,24 @@ const VoteAnalysis: React.FC<VoteAnalysisProps> = ({ session, story, isVisible }
       {/* Vote Distribution */}
       <div className="mb-4">
         <h5 className="font-medium text-gray-800 mb-2">Vote Distribution</h5>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {Object.entries(analysis.voteDistribution || {}).map(([vote, count]) => {
             const countNum = Number(count);
+            const percentage = (countNum / (analysis.totalVotes || 1)) * 100;
             return (
-              <div key={vote} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                <span className="font-medium">{vote}</span>
-                <div className="flex items-center gap-1">
-                  <span className="text-sm text-gray-600">×{countNum}</span>
-                  <div 
-                    className="h-2 bg-blue-500 rounded"
-                    style={{ 
-                      width: `${(countNum / (analysis.totalVotes || 1)) * 40}px`,
-                      minWidth: '4px'
-                    }}
-                  />
+              <div key={vote} className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
+                <span className="font-semibold text-lg bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  {vote}
+                </span>
+                <div className="flex items-center gap-2 flex-1">
+                  <span className="text-sm font-medium text-gray-700">×{countNum}</span>
+                  <div className="flex-1 bg-gray-200 rounded-full h-2 min-w-[40px]">
+                    <div 
+                      className="h-2 bg-blue-500 rounded-full transition-all duration-300"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-gray-500 min-w-[30px]">{Math.round(percentage)}%</span>
                 </div>
               </div>
             );
