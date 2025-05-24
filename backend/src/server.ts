@@ -18,9 +18,11 @@ const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? [
         process.env.FRONTEND_URL || 'https://planning-poker-frontend.onrender.com',
-        'https://planning-poker-frontend.onrender.com'
+        'https://planning-poker-frontend.onrender.com',
+        'http://localhost:3000',
+        'http://localhost:5173'
       ]
-    : ['http://localhost:3000'],
+    : ['http://localhost:3000', 'http://localhost:5173'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
