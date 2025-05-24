@@ -22,6 +22,6 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_BACKEND_URL
-        value: https://planning-poker-backend-ac8h.onrender.com
+        value: https://planning-poker-juwg.onrender.com
       - key: VITE_SOCKET_URL
-        value: https://planning-poker-backend-ac8h.onrender.com
+        value: https://planning-poker-juwg.onrender.com
