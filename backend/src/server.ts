@@ -16,12 +16,21 @@ const server = createServer(app);
 // CORS configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? [process.env.FRONTEND_URL || 'https://planning-poker-frontend-ac8h.onrender.com']
+    ? [
+        process.env.FRONTEND_URL || 'https://planning-poker-frontend.onrender.com',
+        'https://planning-poker-frontend.onrender.com'
+      ]
     : ['http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 };
+
+console.info('CORS configuration:', {
+  NODE_ENV: process.env.NODE_ENV,
+  FRONTEND_URL: process.env.FRONTEND_URL,
+  corsOrigins: corsOptions.origin
+});
 
 // Socket.IO setup
 const io = new SocketIOServer(server, {
