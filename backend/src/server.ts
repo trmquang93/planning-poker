@@ -5,10 +5,10 @@ import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import { setupSocketHandlers } from './services/socketService.js';
-import { sessionRouter } from './controllers/sessionController.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { requestLogger } from './middleware/requestLogger.js';
+import { setupSocketHandlers } from './services/socketService';
+import { sessionRouter } from './controllers/sessionController';
+import { errorHandler } from './middleware/errorHandler';
+import { requestLogger } from './middleware/requestLogger';
 
 const app = express();
 const server = createServer(app);

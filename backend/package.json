@@ -1,7 +1,6 @@
 {
   "name": "@planning-poker/backend",
   "version": "1.0.0",
-  "type": "module",
   "private": true,
   "scripts": {
     "dev": "tsx watch --clear-screen=false src/server.ts",
@@ -43,8 +42,7 @@
     "ts-jest": "^29.1.1"
   },
   "jest": {
-    "preset": "ts-jest/presets/default-esm",
-    "extensionsToTreatAsEsm": [".ts"],
+    "preset": "ts-jest",
     "testEnvironment": "node",
     "roots": ["<rootDir>/src", "<rootDir>/tests"],
     "testMatch": ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
@@ -57,16 +55,7 @@
     "coverageReporters": ["text", "lcov", "html"],
     "setupFilesAfterEnv": ["<rootDir>/tests/setup.ts"],
     "moduleNameMapper": {
-      "^(\\.{1,2}/.*)\\.js$": "$1",
       "^@shared/(.*)$": "<rootDir>/../shared/src/$1"
-    },
-    "transformIgnorePatterns": [
-      "node_modules/(?!(.*\\.mjs$))"
-    ],
-    "transform": {
-      "^.+\\.ts$": ["ts-jest", {
-        "useESM": true
-      }]
     },
     "testTimeout": 10000
   }
