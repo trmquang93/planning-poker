@@ -11,7 +11,7 @@ services:
       - key: PORT
         value: 10000
       - key: FRONTEND_URL
-        value: https://planning-poker-frontend-ac8h.onrender.com
+        value: https://planning-poker-frontend.onrender.com
     
   - type: web
     name: planning-poker-frontend
