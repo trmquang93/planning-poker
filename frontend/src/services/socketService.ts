@@ -32,11 +32,12 @@ class SocketService {
       });
       
       this.socket = io(serverUrl, {
-        transports: ['polling', 'websocket'],
-        timeout: 20000,
+        transports: ['polling'],
+        timeout: 30000,
         forceNew: true,
         withCredentials: false,
         autoConnect: true,
+        upgrade: false,
       });
 
       this.socket.on('connect', () => {
@@ -46,7 +47,7 @@ class SocketService {
         resolve();
       });
 
-      this.socket.on('connect_error', (error) => {
+      this.socket.on('connect_error', (error: any) => {
         console.error('Socket connection error:', error);
         console.error('Error details:', {
           message: error.message,
