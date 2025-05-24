@@ -16,18 +16,13 @@
     "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@shared/*": ["../shared/src/*"]
+      "@/*": ["./src/*"]
     },
     "types": ["vite/client", "@testing-library/jest-dom"]
   },
   "include": [
     "src",
-    "tests",
-    "../shared/src"
+    "tests"
   ],
-  "exclude": ["dist", "node_modules"],
-  "references": [
-    { "path": "../shared" }
-  ]
+  "exclude": ["dist", "node_modules"]
 }

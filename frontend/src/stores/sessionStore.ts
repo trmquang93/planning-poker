@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { Session, Participant, Story } from '@shared/types';
+import type { Session, Participant, Story } from '../shared/types';
 
 interface SessionState {
   // Session data

@@ -1,8 +1,8 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useSessionStore } from '../stores/sessionStore';
 import { socketService } from '../services/socketService';
-import { SocketEvents } from '@shared/types';
-import type { Session, Participant, Story } from '@shared/types';
+import { SocketEvents } from '../shared/types';
+import type { Session, Participant, Story } from '../shared/types';
 
 export const useSocket = () => {
   const {

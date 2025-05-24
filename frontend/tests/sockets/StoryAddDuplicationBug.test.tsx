@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useSessionStore } from '../../src/stores/sessionStore';
-import type { Session, Story } from '@shared/types';
+import type { Session, Story } from '../../src/shared/types';
 
 describe('Story Duplication Prevention Tests', () => {
   let initialSession: Session;

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useSessionStore } from '../../src/stores/sessionStore';
-import type { Session, Participant, Story } from '@shared/types';
+import type { Session, Participant, Story } from '../../src/shared/types';
 
 describe('SessionStore', () => {
   let mockSession: Session;

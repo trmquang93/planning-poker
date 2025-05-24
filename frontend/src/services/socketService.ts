@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
-import { SocketEvents } from '@shared/types';
-import type { Session, Participant } from '@shared/types';
+import { SocketEvents } from '../shared/types';
+import type { Session, Participant } from '../shared/types';
 
 class SocketService {
   private socket: Socket | null = null;

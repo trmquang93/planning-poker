@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StoryManager from '../../src/components/StoryManager';
-import type { Session, Participant } from '@shared/types';
+import type { Session, Participant } from '../../src/shared/types';
 
 describe('StoryManager - Revote Functionality', () => {
   let mockSession: Session;

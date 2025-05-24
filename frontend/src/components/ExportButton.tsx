@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { exportToCSV, exportToText } from '@shared/utils';
-import type { Session } from '@shared/types';
+import { exportToCSV, exportToText } from '../shared/utils';
+import type { Session } from '../shared/types';
 
 interface ExportButtonProps {
   session: Session;

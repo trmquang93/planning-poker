@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import type { Session, Participant, EstimationValue } from '@shared/types';
-import { ESTIMATION_SCALES } from '@shared/types';
+import type { Session, Participant, EstimationValue } from '../shared/types';
+import { ESTIMATION_SCALES } from '../shared/types';
 
 interface VotingInterfaceProps {
   session: Session;

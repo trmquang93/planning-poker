@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import VotingInterface from '../../src/components/VotingInterface';
-import type { Session, Participant } from '@shared/types';
+import type { Session, Participant } from '../../src/shared/types';
 
 // Mock console methods
 vi.spyOn(console, 'warn').mockImplementation(() => {});

@@ -6,7 +6,7 @@ import { apiService } from '../services/apiService';
 import StoryManager from '../components/StoryManager';
 import VotingInterface from '../components/VotingInterface';
 import SessionSummary from '../components/SessionSummary';
-import type { Session, Participant, EstimationValue } from '@shared/types';
+import type { Session, Participant, EstimationValue } from '../shared/types';
 
 interface LocationState {
   session?: Session;

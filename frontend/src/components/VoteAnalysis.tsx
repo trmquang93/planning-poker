@@ -1,6 +1,6 @@
 import React from 'react';
-import { analyzeVotes, calculateStoryStats } from '@shared/utils';
-import type { Session, Story, EstimationValue } from '@shared/types';
+import { analyzeVotes, calculateStoryStats } from '../shared/utils';
+import type { Session, Story, EstimationValue } from '../shared/types';
 
 interface VoteAnalysisProps {
   session: Session;

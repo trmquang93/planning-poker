@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import type { Session, Story, Participant } from '@shared/types';
-import { ESTIMATION_SCALES } from '@shared/types';
-import { analyzeVotes } from '@shared/utils';
+import type { Session, Story, Participant } from '../shared/types';
+import { ESTIMATION_SCALES } from '../shared/types';
+import { analyzeVotes } from '../shared/utils';
 import VoteAnalysis from './VoteAnalysis';
 
 interface StoryManagerProps {

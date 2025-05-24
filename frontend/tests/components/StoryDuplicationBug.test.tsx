@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import StoryManager from '../../src/components/StoryManager';
-import type { Session, Participant, Story } from '@shared/types';
+import type { Session, Participant, Story } from '../../src/shared/types';
 
 describe('StoryManager - Story Duplication Bug', () => {
   let mockSession: Session;

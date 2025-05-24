@@ -1,6 +1,6 @@
 import React from 'react';
-import { calculateStoryStats, formatDuration } from '@shared/utils';
-import type { Session } from '@shared/types';
+import { calculateStoryStats, formatDuration } from '../shared/utils';
+import type { Session } from '../shared/types';
 
 interface SessionSummaryProps {
   session: Session;
