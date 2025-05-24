@@ -26,11 +26,17 @@ class SocketService {
 
       const serverUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
       console.info('Attempting to connect to socket server:', serverUrl);
+      console.info('Environment variables:', {
+        VITE_SOCKET_URL: import.meta.env.VITE_SOCKET_URL,
+        VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL
+      });
       
       this.socket = io(serverUrl, {
-        transports: ['polling'],
-        timeout: 10000,
+        transports: ['polling', 'websocket'],
+        timeout: 20000,
         forceNew: true,
+        withCredentials: false,
+        autoConnect: true,
       });
 
       this.socket.on('connect', () => {
@@ -42,7 +48,12 @@ class SocketService {
 
       this.socket.on('connect_error', (error) => {
         console.error('Socket connection error:', error);
-        console.error('Error details:', error.message);
+        console.error('Error details:', {
+          message: error.message,
+          description: error.description,
+          context: error.context,
+          type: error.type
+        });
         this.isConnected = false;
         reject(error);
       });
