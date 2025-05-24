@@ -1,5 +1,5 @@
 import type { Server as SocketIOServer, Socket } from 'socket.io';
-import { SocketEvents, JoinSessionEventSchema, ErrorEventSchema } from '@shared/types';
+import { SocketEvents, JoinSessionEventSchema, ErrorEventSchema } from '../shared/types';
 import { SessionService } from './sessionService';
 
 const sessionService = SessionService.getInstance();

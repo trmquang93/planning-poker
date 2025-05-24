@@ -1,4 +1,4 @@
-import type { Session, Participant, CreateSessionRequest, JoinSessionRequest, Story } from '@shared/types';
+import type { Session, Participant, CreateSessionRequest, JoinSessionRequest, Story } from '../shared/types';
 import { 
   generateSessionId, 
   generateSessionCode, 
@@ -8,7 +8,7 @@ import {
   isSessionExpired,
   analyzeVotes,
   suggestEstimate
-} from '@shared/utils';
+} from '../shared/utils';
 
 // In-memory storage for sessions
 const sessions = new Map<string, Session>();

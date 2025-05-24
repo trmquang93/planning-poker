@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
-import { CreateSessionRequestSchema, JoinSessionRequestSchema } from '@shared/types';
+import { CreateSessionRequestSchema, JoinSessionRequestSchema } from '../shared/types';
 import { SessionService } from '../services/sessionService';
 
 export const sessionRouter = Router();
