@@ -21,10 +21,11 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
     : null;
   const hasVoted = currentStory ? currentParticipant.name in currentStory.votes : false;
   const myVote = currentStory ? currentStory.votes[currentParticipant.name] : null;
+  const isVotingDisabled = session.status === 'revealing' || session.status === 'completed';
 
   const handleVoteSubmit = useCallback((vote: EstimationValue) => {
-    if (isSubmitting || !currentStory || hasVoted) {
-      return; // Prevent double submission or submission when already voted
+    if (isSubmitting || !currentStory || isVotingDisabled) {
+      return; // Prevent submission when voting is disabled or during submission
     }
     
     setIsSubmitting(true);
@@ -51,25 +52,7 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
     );
   }
 
-  if (hasVoted) {
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="text-center py-8">
-          <div className="text-4xl mb-4">✅</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Vote Submitted</h3>
-          <p className="text-gray-600 mb-4">
-            Your vote: <span className="font-semibold text-blue-600">{myVote}</span>
-          </p>
-          <p className="text-sm text-gray-500">
-            Waiting for other participants to vote...
-          </p>
-          <div className="mt-4 text-sm text-blue-600">
-            {Object.keys(currentStory.votes).length} / {session.participants.length} votes submitted
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Remove the early return for hasVoted - we want to show voting cards always
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
@@ -81,33 +64,66 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
             <p className="text-blue-800 text-sm">{currentStory.description}</p>
           )}
         </div>
+        
+        {/* Show current vote status */}
+        {hasVoted && !isVotingDisabled && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-green-800 text-sm font-medium">✅ Your current vote: </span>
+                <span className="text-green-900 font-semibold">{myVote}</span>
+              </div>
+              <span className="text-green-600 text-xs">Click another card to change your vote</span>
+            </div>
+          </div>
+        )}
+        
+        {isVotingDisabled && (
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <span className="text-yellow-800 text-sm font-medium">🔒 Voting is now closed</span>
+          </div>
+        )}
       </div>
 
       <div className="mb-6">
         <h4 className="text-sm font-medium text-gray-700 mb-3">
-          Select your estimate using {session.scale.replace('_', ' ')} scale:
+          {isVotingDisabled 
+            ? `Final estimates using ${session.scale.replace('_', ' ')} scale:`
+            : hasVoted 
+              ? `Change your estimate using ${session.scale.replace('_', ' ')} scale:`
+              : `Select your estimate using ${session.scale.replace('_', ' ')} scale:`
+          }
         </h4>
         
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
-          {estimationValues.map((value) => (
-            <button
-              key={value}
-              onClick={() => handleVoteSubmit(value)}
-              disabled={isSubmitting}
-              className={`
-                aspect-square p-4 border-2 rounded-lg font-semibold text-lg
-                transition-all duration-200 hover:scale-105 active:scale-95
-                ${isSubmitting 
-                  ? 'border-gray-300 bg-gray-200 text-gray-500 cursor-not-allowed'
-                  : selectedVote === value 
-                    ? 'border-blue-500 bg-blue-500 text-white shadow-lg' 
-                    : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
-                }
-              `}
-            >
-              {value}
-            </button>
-          ))}
+          {estimationValues.map((value) => {
+            const isCurrentVote = hasVoted && myVote === value;
+            const isDisabled = isSubmitting || isVotingDisabled;
+            
+            return (
+              <button
+                key={value}
+                onClick={() => handleVoteSubmit(value)}
+                disabled={isDisabled}
+                className={`
+                  aspect-square p-4 border-2 rounded-lg font-semibold text-lg
+                  transition-all duration-200 
+                  ${!isDisabled ? 'hover:scale-105 active:scale-95' : ''}
+                  ${isDisabled
+                    ? 'border-gray-300 bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : isCurrentVote
+                      ? 'border-green-500 bg-green-500 text-white shadow-lg ring-2 ring-green-200' 
+                      : selectedVote === value 
+                        ? 'border-blue-500 bg-blue-500 text-white shadow-lg' 
+                        : 'border-gray-300 bg-white text-gray-700 hover:border-blue-300 hover:bg-blue-50'
+                  }
+                `}
+              >
+                {value}
+                {isCurrentVote && <div className="text-xs mt-1">✓</div>}
+              </button>
+            );
+          })}
         </div>
       </div>
 
