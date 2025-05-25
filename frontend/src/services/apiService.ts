@@ -18,6 +18,14 @@ class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
+    // Add debugging to track all API calls
+    console.log('🌐 API Request:', {
+      url,
+      method: options.method || 'GET',
+      timestamp: new Date().toISOString(),
+      stackTrace: new Error().stack
+    });
+    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',

@@ -49,12 +49,14 @@ const SessionPage = () => {
   useEffect(() => {
     const initializeSession = async () => {
       try {
+        console.log('🔄 SessionPage: Initializing session', { sessionId, locationState: location.state });
         setIsLoading(true);
         clearError();
         
         // Reset store if we're navigating directly to a session URL without state
         const state = location.state as LocationState;
         if (!state?.session && sessionId) {
+          console.log('🔄 SessionPage: Resetting store (no navigation state)');
           reset();
         }
         
@@ -74,18 +76,21 @@ const SessionPage = () => {
           }
         } else if (sessionId) {
           // Try to fetch session data from API
+          console.log('🌐 SessionPage: No navigation state, fetching session from API:', sessionId);
           try {
             const response = await apiService.getSession(sessionId);
+            console.log('🌐 SessionPage: API response received:', response);
             setSession(response.session);
             
             // If no participant data, redirect to home
             if (!state?.participantId) {
+              console.log('🔄 SessionPage: No participant data, redirecting to home');
               navigate('/', { replace: true });
               return;
             }
           } catch (apiError) {
             // Session doesn't exist on server (404) or other API error
-            console.warn('Session not found on server, clearing store and redirecting:', apiError);
+            console.warn('❌ SessionPage: Session not found on server, clearing store and redirecting:', apiError);
             reset(); // Clear any stale session data
             navigate('/', { replace: true });
             return;
