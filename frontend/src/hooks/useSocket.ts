@@ -57,14 +57,24 @@ export const useSocket = () => {
 
       // Session events
       socketService.on(SocketEvents.SESSION_UPDATED, (data: { session: Session }) => {
+        console.info('🔄 Frontend: Received SESSION_UPDATED', {
+          sessionId: data.session.id,
+          participantCount: data.session.participants.length,
+          participants: data.session.participants.map(p => ({ name: p.name, isOnline: p.isOnline }))
+        });
         setSession(data.session);
       });
 
       socketService.on(SocketEvents.PARTICIPANT_JOINED, (data: { participant: Participant }) => {
+        console.info('👤 Frontend: Received PARTICIPANT_JOINED', {
+          participant: data.participant.name,
+          isOnline: data.participant.isOnline
+        });
         updateParticipant(data.participant);
       });
 
       socketService.on(SocketEvents.PARTICIPANT_LEFT, (data: { participantId: string }) => {
+        console.info('🚪 Frontend: Received PARTICIPANT_LEFT', { participantId: data.participantId });
         removeParticipant(data.participantId);
       });
 

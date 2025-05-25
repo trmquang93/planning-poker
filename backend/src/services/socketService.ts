@@ -72,6 +72,7 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
 
         // Join socket room
         await socket.join(validated.sessionId);
+        console.info(`🔌 Socket ${socket.id} joined room ${validated.sessionId}`);
         
         // Track socket connection
         socketToSession.set(socket.id, {
@@ -80,19 +81,25 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
         });
 
         // Update participant online status
-        sessionService.updateParticipantStatus(validated.sessionId, validated.participant.id, true);
+        const statusUpdateResult = sessionService.updateParticipantStatus(validated.sessionId, validated.participant.id, true);
+        console.info(`👤 Updated participant status for ${validated.participant.name}:`, statusUpdateResult ? 'Success' : 'Failed');
 
-        // Notify session of participant join
+        // Get updated session after status change
+        const updatedSession = sessionService.getSession(validated.sessionId);
+        console.info(`📊 Session after join - Participants:`, updatedSession?.participants.map(p => ({ name: p.name, isOnline: p.isOnline })));
+
+        // Send updated session to the joining participant only (original behavior)
+        socket.emit(SocketEvents.SESSION_UPDATED, {
+          session: updatedSession,
+        });
+        console.info(`📤 Sent SESSION_UPDATED to joining participant ${validated.participant.name}`);
+
+        // Notify other participants about the join
         socket.to(validated.sessionId).emit(SocketEvents.PARTICIPANT_JOINED, {
           participant: validated.participant,
           sessionId: validated.sessionId,
         });
-
-        // Send updated session to the joining participant
-        const updatedSession = sessionService.getSession(validated.sessionId);
-        socket.emit(SocketEvents.SESSION_UPDATED, {
-          session: updatedSession,
-        });
+        console.info(`📢 Sent PARTICIPANT_JOINED to other participants about ${validated.participant.name}`);
 
         console.info(`Participant ${validated.participant.name} joined session ${validated.sessionId}`);
       } catch (error) {
@@ -106,7 +113,7 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
 
     // Handle session leaving
     socket.on(SocketEvents.LEAVE_SESSION, async () => {
-      await handleParticipantLeave(socket);
+      await handleParticipantLeave(socket, io);
     });
 
     // Handle adding stories
@@ -465,7 +472,7 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
     // Handle disconnect
     socket.on('disconnect', async (reason) => {
       console.info(`Client disconnected: ${socket.id}, reason: ${reason}`);
-      await handleParticipantLeave(socket);
+      await handleParticipantLeave(socket, io);
     });
 
     // Handle errors
@@ -478,7 +485,7 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
 };
 
 // Helper function to handle participant leaving
-async function handleParticipantLeave(socket: Socket): Promise<void> {
+async function handleParticipantLeave(socket: Socket, io: SocketIOServer): Promise<void> {
   const connection = socketToSession.get(socket.id);
   if (!connection) {
     return;
@@ -493,14 +500,14 @@ async function handleParticipantLeave(socket: Socket): Promise<void> {
     );
 
     if (updatedSession) {
-      // Notify other participants
+      // Notify other participants about the leave
       socket.to(connection.sessionId).emit(SocketEvents.PARTICIPANT_LEFT, {
         participantId: connection.participantId,
         sessionId: connection.sessionId,
       });
 
-      // Broadcast updated session
-      socket.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {
+      // Broadcast updated session to ALL remaining participants
+      io.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {
         session: updatedSession,
       });
     }
