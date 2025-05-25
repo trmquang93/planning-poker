@@ -50,24 +50,24 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ session }) => {
 
       {/* Statistics Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="text-center p-3 bg-blue-50 rounded-lg">
+        <div className="text-center p-3 bg-blue-50 rounded-lg h-20 flex flex-col justify-center">
           <div className="text-2xl font-bold text-blue-600">{stats.totalStories}</div>
-          <div className="text-sm text-blue-700">Total Stories</div>
+          <div className="text-sm text-blue-700 leading-tight">Total<br />Stories</div>
         </div>
         
-        <div className="text-center p-3 bg-green-50 rounded-lg">
+        <div className="text-center p-3 bg-green-50 rounded-lg h-20 flex flex-col justify-center">
           <div className="text-2xl font-bold text-green-600">{stats.completedStories}</div>
-          <div className="text-sm text-green-700">Completed</div>
+          <div className="text-sm text-green-700 leading-tight">Completed</div>
         </div>
         
-        <div className="text-center p-3 bg-yellow-50 rounded-lg">
+        <div className="text-center p-3 bg-yellow-50 rounded-lg h-20 flex flex-col justify-center">
           <div className="text-2xl font-bold text-yellow-600">{stats.pendingStories}</div>
-          <div className="text-sm text-yellow-700">Pending</div>
+          <div className="text-sm text-yellow-700 leading-tight">Pending</div>
         </div>
         
-        <div className="text-center p-3 bg-purple-50 rounded-lg">
+        <div className="text-center p-3 bg-purple-50 rounded-lg h-20 flex flex-col justify-center">
           <div className="text-2xl font-bold text-purple-600">{stats.votingStories}</div>
-          <div className="text-sm text-purple-700">In Voting</div>
+          <div className="text-sm text-purple-700 leading-tight">Voting</div>
         </div>
       </div>
 
