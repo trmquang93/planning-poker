@@ -6,7 +6,12 @@ import type {
   Session 
 } from '../shared/types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001') + '/api';
+
+console.info('API Configuration:', {
+  VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL,
+  API_BASE_URL
+});
 
 class ApiService {
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
