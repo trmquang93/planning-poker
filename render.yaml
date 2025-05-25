@@ -20,6 +20,10 @@ services:
     rootDir: frontend
     buildCommand: npm ci --ignore-scripts && npm run build
     staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_BACKEND_URL
         value: https://planning-poker-juwg.onrender.com
