@@ -9,7 +9,14 @@ const socketToSession = new Map<string, { sessionId: string; participantId: stri
 
 export const setupSocketHandlers = (io: SocketIOServer): void => {
   io.on('connection', (socket: Socket) => {
-    console.info(`Client connected: ${socket.id}`);
+    console.info(`Client connected: ${socket.id} from origin: ${socket.request.headers.origin}`);
+    
+    // Clean up any existing connections for this socket
+    const existingConnection = socketToSession.get(socket.id);
+    if (existingConnection) {
+      console.info(`Cleaning up existing connection for socket: ${socket.id}`);
+      socketToSession.delete(socket.id);
+    }
     
     // Send welcome message
     socket.emit('welcome', {

@@ -35,18 +35,11 @@ console.info('CORS configuration:', {
   corsOrigins: corsOptions.origin
 });
 
-// Socket.IO setup with more permissive CORS
+// Socket.IO setup with very permissive CORS for debugging
 const socketCorsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? [
-        'https://planning-poker-frontend.onrender.com',
-        process.env.FRONTEND_URL || 'https://planning-poker-frontend.onrender.com',
-        'http://localhost:3000',
-        'http://localhost:5173'
-      ]
-    : true, // Allow all origins in development
-  methods: ['GET', 'POST'],
-  credentials: true,
+  origin: "*", // Allow all origins temporarily
+  methods: ["GET", "POST"],
+  credentials: false, // Disable credentials for now
   allowEIO3: true
 };
 

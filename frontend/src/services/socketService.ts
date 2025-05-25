@@ -18,19 +18,23 @@ class SocketService {
    */
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.socket && this.isConnected) {
-        console.info('Already connected to socket');
-        resolve();
-        return;
+      // Force cleanup of any existing connection
+      if (this.socket) {
+        console.info('Cleaning up existing socket connection');
+        this.socket.disconnect();
+        this.socket = null;
+        this.isConnected = false;
       }
 
       const serverUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
       console.info('Attempting to connect to socket server:', serverUrl);
       console.info('Environment variables:', {
         VITE_SOCKET_URL: import.meta.env.VITE_SOCKET_URL,
-        VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL
+        VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL,
+        location: window.location.origin
       });
       
+      // Ensure completely fresh connection on each page load
       this.socket = io(serverUrl, {
         transports: ['polling'],
         timeout: 30000,
@@ -38,6 +42,10 @@ class SocketService {
         withCredentials: false,
         autoConnect: true,
         upgrade: false,
+        reconnection: false, // Disable auto-reconnection initially
+        query: {
+          t: Date.now() // Add timestamp to force fresh connection
+        }
       });
 
       this.socket.on('connect', () => {
