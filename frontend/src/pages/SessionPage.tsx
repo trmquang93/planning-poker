@@ -31,6 +31,9 @@ const SessionPage = () => {
     setError,
     clearError,
     reset,
+    loadPersistedSession,
+    saveSession,
+    clearPersistedSession,
   } = useSessionStore();
 
   const { 
@@ -53,47 +56,57 @@ const SessionPage = () => {
         setIsLoading(true);
         clearError();
         
-        // Reset store if we're navigating directly to a session URL without state
         const state = location.state as LocationState;
-        if (!state?.session && sessionId) {
-          console.log('🔄 SessionPage: Resetting store (no navigation state)');
-          reset();
-        }
         
         if (state?.session && state?.participantId) {
-          // We have session data from navigation
-          console.log('Setting session from navigation state:', state.session);
-          console.log('Participant ID:', state.participantId);
+          // We have session data from navigation - use it and save to persistence
+          console.log('🔄 SessionPage: Using session from navigation state:', state.session);
+          console.log('🔄 SessionPage: Participant ID:', state.participantId);
           setSession(state.session);
           
           const participant = state.session.participants.find(p => p.id === state.participantId);
-          console.log('Found participant:', participant);
+          console.log('🔄 SessionPage: Found participant:', participant);
           if (participant) {
             setCurrentParticipant(participant);
+            // Save to localStorage for page refresh
+            console.log('💾 SessionPage: Saving session to localStorage');
+            setTimeout(() => saveSession(), 0); // Save after state is set
           } else {
             console.error('Participant not found in session');
             setError('Participant not found in session');
           }
         } else if (sessionId) {
-          // Try to fetch session data from API
-          console.log('🌐 SessionPage: No navigation state, fetching session from API:', sessionId);
-          try {
-            const response = await apiService.getSession(sessionId);
-            console.log('🌐 SessionPage: API response received:', response);
-            setSession(response.session);
-            
-            // If no participant data, redirect to home
-            if (!state?.participantId) {
-              console.log('🔄 SessionPage: No participant data, redirecting to home');
+          // No navigation state - try localStorage first, then API
+          console.log('🔍 SessionPage: No navigation state, checking localStorage first');
+          loadPersistedSession();
+          
+          // Check if we loaded a session that matches the URL
+          const currentState = useSessionStore.getState();
+          if (currentState.session?.id === sessionId && currentState.currentParticipant) {
+            console.log('💾 SessionPage: Restored session from localStorage:', currentState.session);
+            // Session restored from localStorage, we're good to go!
+          } else {
+            // No valid localStorage session, try API as fallback
+            console.log('🌐 SessionPage: No localStorage session, trying API:', sessionId);
+            try {
+              const response = await apiService.getSession(sessionId);
+              console.log('🌐 SessionPage: API response received:', response);
+              setSession(response.session);
+              
+              // If no participant data, redirect to home
+              if (!state?.participantId) {
+                console.log('🔄 SessionPage: No participant data from API, redirecting to home');
+                navigate('/', { replace: true });
+                return;
+              }
+            } catch (apiError) {
+              // Session doesn't exist on server (404) or other API error
+              console.warn('❌ SessionPage: Session not found on server or localStorage, redirecting to home:', apiError);
+              clearPersistedSession(); // Clear any stale localStorage data
+              reset(); // Clear any stale session data
               navigate('/', { replace: true });
               return;
             }
-          } catch (apiError) {
-            // Session doesn't exist on server (404) or other API error
-            console.warn('❌ SessionPage: Session not found on server, clearing store and redirecting:', apiError);
-            reset(); // Clear any stale session data
-            navigate('/', { replace: true });
-            return;
           }
         } else {
           navigate('/', { replace: true });
@@ -109,7 +122,7 @@ const SessionPage = () => {
     };
 
     initializeSession();
-  }, [sessionId, location.state, navigate, setSession, setCurrentParticipant, setError, clearError, reset]);
+  }, [sessionId, location.state, navigate, setSession, setCurrentParticipant, setError, clearError, reset, loadPersistedSession, saveSession, clearPersistedSession]);
 
   // Connect and join WebSocket session when session and participant are ready
   useEffect(() => {
@@ -130,6 +143,7 @@ const SessionPage = () => {
   const handleLeaveSession = () => {
     leaveSession();
     setHasJoinedSocket(false);
+    clearPersistedSession(); // Clear localStorage when leaving
     navigate('/', { replace: true });
   };
 

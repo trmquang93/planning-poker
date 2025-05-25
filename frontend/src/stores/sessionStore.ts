@@ -2,6 +2,58 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import type { Session, Participant, Story } from '../shared/types';
 
+// Session persistence helpers
+const SESSION_STORAGE_KEY = 'planning-poker-session';
+
+interface PersistedSessionData {
+  session: Session;
+  currentParticipant: Participant;
+  timestamp: number;
+}
+
+const saveSessionToStorage = (session: Session, participant: Participant) => {
+  try {
+    const data: PersistedSessionData = {
+      session,
+      currentParticipant: participant,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.warn('Failed to save session to localStorage:', error);
+  }
+};
+
+const loadSessionFromStorage = (): PersistedSessionData | null => {
+  try {
+    const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!stored) return null;
+    
+    const data: PersistedSessionData = JSON.parse(stored);
+    
+    // Check if session is too old (older than 2 hours)
+    const TWO_HOURS = 2 * 60 * 60 * 1000;
+    if (Date.now() - data.timestamp > TWO_HOURS) {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.warn('Failed to load session from localStorage:', error);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+    return null;
+  }
+};
+
+const clearSessionFromStorage = () => {
+  try {
+    localStorage.removeItem(SESSION_STORAGE_KEY);
+  } catch (error) {
+    console.warn('Failed to clear session from localStorage:', error);
+  }
+};
+
 interface SessionState {
   // Session data
   session: Session | null;
@@ -43,6 +95,11 @@ interface SessionState {
   // Utility actions
   reset: () => void;
   clearError: () => void;
+  
+  // Persistence actions
+  loadPersistedSession: () => void;
+  saveSession: () => void;
+  clearPersistedSession: () => void;
 }
 
 const initialState = {
@@ -226,6 +283,28 @@ export const useSessionStore = create<SessionState>()(
       reset: () => set(initialState, false, 'reset'),
       
       clearError: () => set({ error: null }, false, 'clearError'),
+      
+      // Persistence actions
+      loadPersistedSession: () => {
+        const persistedData = loadSessionFromStorage();
+        if (persistedData) {
+          set({
+            session: persistedData.session,
+            currentParticipant: persistedData.currentParticipant
+          }, false, 'loadPersistedSession');
+        }
+      },
+      
+      saveSession: () => {
+        const state = get();
+        if (state.session && state.currentParticipant) {
+          saveSessionToStorage(state.session, state.currentParticipant);
+        }
+      },
+      
+      clearPersistedSession: () => {
+        clearSessionFromStorage();
+      },
     }),
     {
       name: 'session-store',
