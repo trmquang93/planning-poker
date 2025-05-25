@@ -10,7 +10,8 @@ const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001
 
 console.info('API Configuration:', {
   VITE_BACKEND_URL: import.meta.env.VITE_BACKEND_URL,
-  API_BASE_URL
+  API_BASE_URL,
+  buildTime: new Date().toISOString()
 });
 
 class ApiService {
