@@ -55,9 +55,9 @@ const SessionSummary: React.FC<SessionSummaryProps> = ({ session }) => {
           <div className="text-sm text-blue-700 leading-tight">Total<br />Stories</div>
         </div>
         
-        <div className="text-center p-3 bg-green-50 rounded-lg h-20 flex flex-col justify-center">
+        <div className="text-center p-2 bg-green-50 rounded-lg h-20 flex flex-col justify-center">
           <div className="text-2xl font-bold text-green-600">{stats.completedStories}</div>
-          <div className="text-sm text-green-700 leading-tight">Completed</div>
+          <div className="text-xs text-green-700 leading-none">Done</div>
         </div>
         
         <div className="text-center p-3 bg-yellow-50 rounded-lg h-20 flex flex-col justify-center">
