@@ -9,22 +9,110 @@ class SocketService {
   private maxReconnectAttempts = 5;
   private sessionId: string | null = null;
   private participantId: string | null = null;
+  private cleanupHandlersAdded = false;
 
   // Event listeners
   private listeners = new Map<string, Set<(...args: any[]) => void>>();
 
+  constructor() {
+    this.setupCleanupHandlers();
+  }
+
+  /**
+   * Setup cleanup handlers to ensure proper disconnection on page unload
+   */
+  private setupCleanupHandlers(): void {
+    if (this.cleanupHandlersAdded || typeof window === 'undefined') {
+      return;
+    }
+
+    const cleanup = () => {
+      if (this.socket) {
+        console.info('Cleaning up socket connection due to page unload');
+        this.socket.disconnect(); // Disconnect immediately
+        this.socket = null;
+        this.isConnected = false;
+        this.sessionId = null;
+        this.participantId = null;
+      }
+    };
+
+    // Handle various unload scenarios
+    window.addEventListener('beforeunload', cleanup);
+    window.addEventListener('unload', cleanup);
+    window.addEventListener('pagehide', cleanup);
+    
+    // Handle visibility changes (tab switching, etc.)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        cleanup();
+      }
+    });
+
+    this.cleanupHandlersAdded = true;
+  }
+
+  /**
+   * Comprehensively clear all Socket.IO related storage
+   */
+  private async clearSocketIOStorage(): Promise<void> {
+    try {
+      // Clear localStorage entries
+      const localKeysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('socket.io') || key.includes('socketio') || key.includes('engine.io'))) {
+          localKeysToRemove.push(key);
+        }
+      }
+      localKeysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // Clear sessionStorage entries
+      const sessionKeysToRemove = [];
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i);
+        if (key && (key.startsWith('socket.io') || key.includes('socketio') || key.includes('engine.io'))) {
+          sessionKeysToRemove.push(key);
+        }
+      }
+      sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
+
+      // Clear IndexedDB entries (Socket.IO might use this)
+      if ('indexedDB' in window) {
+        try {
+          const databases = await indexedDB.databases();
+          for (const db of databases) {
+            if (db.name && (db.name.includes('socket') || db.name.includes('engine'))) {
+              indexedDB.deleteDatabase(db.name);
+            }
+          }
+        } catch (e) {
+          console.warn('Could not clear IndexedDB:', e);
+        }
+      }
+
+      console.info('Socket.IO storage cleared successfully');
+    } catch (e) {
+      console.warn('Could not completely clear Socket.IO storage:', e);
+    }
+  }
+
   /**
    * Connect to the WebSocket server
    */
-  public connect(): Promise<void> {
+  public async connect(): Promise<void> {
+    // Force cleanup of any existing connection
+    if (this.socket) {
+      console.info('Cleaning up existing socket connection');
+      this.socket.disconnect();
+      this.socket = null;
+      this.isConnected = false;
+    }
+
+    // Comprehensive cleanup of any stored Socket.IO state
+    await this.clearSocketIOStorage();
+
     return new Promise((resolve, reject) => {
-      // Force cleanup of any existing connection
-      if (this.socket) {
-        console.info('Cleaning up existing socket connection');
-        this.socket.disconnect();
-        this.socket = null;
-        this.isConnected = false;
-      }
 
       const serverUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001';
       console.info('Attempting to connect to socket server:', serverUrl);
@@ -34,17 +122,27 @@ class SocketService {
         location: window.location.origin
       });
       
-      // Ensure completely fresh connection on each page load
+      // Generate unique connection ID to prevent any caching
+      const connectionId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+      
+      // Ensure completely fresh connection with comprehensive options
       this.socket = io(serverUrl, {
-        transports: ['polling'],
+        transports: ['polling'], // Use polling only to avoid upgrade issues
         timeout: 30000,
-        forceNew: true,
-        withCredentials: false,
+        forceNew: true, // Force completely new connection
+        withCredentials: false, // Don't send cookies/credentials
         autoConnect: true,
-        upgrade: false,
-        reconnection: false, // Disable auto-reconnection initially
+        upgrade: false, // Never upgrade to websocket
+        reconnection: false, // Completely disable auto-reconnection
+        reconnectionAttempts: 0, // No reconnection attempts
+        rememberUpgrade: false, // Don't remember transport upgrades
+        multiplex: false, // Disable connection multiplexing
+        closeOnBeforeunload: true, // Close connection on page unload
         query: {
-          t: Date.now() // Add timestamp to force fresh connection
+          t: Date.now(), // Timestamp to force fresh connection
+          cid: connectionId, // Unique connection ID
+          fresh: 'true', // Flag for fresh connection
+          v: '1.0' // Version flag to bypass any caching
         }
       });
 

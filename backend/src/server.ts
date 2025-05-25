@@ -48,7 +48,9 @@ const io = new SocketIOServer(server, {
   transports: ['polling', 'websocket'],
   pingTimeout: 60000,
   pingInterval: 25000,
-  allowEIO3: true
+  allowEIO3: true,
+  serveClient: false, // Don't serve client files
+  connectTimeout: 45000 // Longer timeout for connections
 });
 
 // Rate limiting
@@ -83,7 +85,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ 
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -110,7 +112,7 @@ setupSocketHandlers(io);
 app.use(errorHandler);
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use('*', (_req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 

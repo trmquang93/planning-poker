@@ -1,5 +1,5 @@
 import type { Server as SocketIOServer, Socket } from 'socket.io';
-import { SocketEvents, JoinSessionEventSchema, ErrorEventSchema } from '../shared/types';
+import { SocketEvents, JoinSessionEventSchema } from '../shared/types';
 import { SessionService } from './sessionService';
 
 const sessionService = SessionService.getInstance();
@@ -10,6 +10,26 @@ const socketToSession = new Map<string, { sessionId: string; participantId: stri
 export const setupSocketHandlers = (io: SocketIOServer): void => {
   io.on('connection', (socket: Socket) => {
     console.info(`Client connected: ${socket.id} from origin: ${socket.request.headers.origin}`);
+    
+    // Check if this is a refresh request
+    const query = socket.handshake.query;
+    const isRefresh = query.refresh === 'true';
+    
+    if (isRefresh) {
+      console.info(`Detected page refresh for socket: ${socket.id}`);
+      // Clear any stale connections that might be causing issues
+      const staleSockets = [...socketToSession.entries()].filter(([socketId, connection]) => {
+        // Remove connections that aren't from recent timestamps
+        const socketCreatedTime = parseInt(query.t as string) || Date.now();
+        const timeDiff = Date.now() - socketCreatedTime;
+        return timeDiff > 60000; // Remove connections older than 1 minute
+      });
+      
+      staleSockets.forEach(([socketId]) => {
+        console.info(`Removing stale socket connection: ${socketId}`);
+        socketToSession.delete(socketId);
+      });
+    }
     
     // Clean up any existing connections for this socket
     const existingConnection = socketToSession.get(socket.id);
@@ -23,6 +43,7 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
       message: 'Connected to Planning Poker server',
       socketId: socket.id,
       timestamp: new Date().toISOString(),
+      isRefresh: isRefresh,
     });
 
     // Handle session joining

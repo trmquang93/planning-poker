@@ -12,5 +12,5 @@ jobs:
     - name: Trigger Render Deploy
       run: |
         echo "Render will automatically deploy from GitHub"
-        echo "Backend: https://planning-poker-backend.onrender.com"
+        echo "Backend: https://planning-poker-juwg.onrender.com"
         echo "Frontend: https://planning-poker-frontend.onrender.com"
