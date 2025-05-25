@@ -30,6 +30,7 @@ const SessionPage = () => {
     setCurrentParticipant,
     setError,
     clearError,
+    reset,
   } = useSessionStore();
 
   const { 
@@ -51,7 +52,11 @@ const SessionPage = () => {
         setIsLoading(true);
         clearError();
         
+        // Reset store if we're navigating directly to a session URL without state
         const state = location.state as LocationState;
+        if (!state?.session && sessionId) {
+          reset();
+        }
         
         if (state?.session && state?.participantId) {
           // We have session data from navigation
@@ -68,12 +73,20 @@ const SessionPage = () => {
             setError('Participant not found in session');
           }
         } else if (sessionId) {
-          // Fetch session data from API
-          const response = await apiService.getSession(sessionId);
-          setSession(response.session);
-          
-          // If no participant data, redirect to home
-          if (!state?.participantId) {
+          // Try to fetch session data from API
+          try {
+            const response = await apiService.getSession(sessionId);
+            setSession(response.session);
+            
+            // If no participant data, redirect to home
+            if (!state?.participantId) {
+              navigate('/', { replace: true });
+              return;
+            }
+          } catch (apiError) {
+            // Session doesn't exist on server (404) or other API error
+            console.warn('Session not found on server, clearing store and redirecting:', apiError);
+            reset(); // Clear any stale session data
             navigate('/', { replace: true });
             return;
           }
@@ -91,7 +104,7 @@ const SessionPage = () => {
     };
 
     initializeSession();
-  }, [sessionId, location.state, navigate, setSession, setCurrentParticipant, setError, clearError]);
+  }, [sessionId, location.state, navigate, setSession, setCurrentParticipant, setError, clearError, reset]);
 
   // Connect and join WebSocket session when session and participant are ready
   useEffect(() => {
