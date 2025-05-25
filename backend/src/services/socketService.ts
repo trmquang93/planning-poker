@@ -88,13 +88,13 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
         const updatedSession = sessionService.getSession(validated.sessionId);
         console.info(`📊 Session after join - Participants:`, updatedSession?.participants.map(p => ({ name: p.name, isOnline: p.isOnline })));
 
-        // Send updated session to the joining participant only (original behavior)
-        socket.emit(SocketEvents.SESSION_UPDATED, {
+        // Send updated session to ALL participants (including the joining one)
+        io.to(validated.sessionId).emit(SocketEvents.SESSION_UPDATED, {
           session: updatedSession,
         });
-        console.info(`📤 Sent SESSION_UPDATED to joining participant ${validated.participant.name}`);
+        console.info(`📤 Sent SESSION_UPDATED to ALL participants in session ${validated.sessionId}`);
 
-        // Notify other participants about the join
+        // Also send specific participant joined event for any special handling
         socket.to(validated.sessionId).emit(SocketEvents.PARTICIPANT_JOINED, {
           participant: validated.participant,
           sessionId: validated.sessionId,
