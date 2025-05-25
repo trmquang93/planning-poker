@@ -23,9 +23,10 @@ const corsOptions = {
         'http://localhost:5173'
       ]
     : ['http://localhost:3000', 'http://localhost:5173'],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
   credentials: true,
+  optionsSuccessStatus: 200
 };
 
 console.info('CORS configuration:', {
@@ -34,12 +35,27 @@ console.info('CORS configuration:', {
   corsOrigins: corsOptions.origin
 });
 
-// Socket.IO setup
+// Socket.IO setup with more permissive CORS
+const socketCorsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? [
+        'https://planning-poker-frontend.onrender.com',
+        process.env.FRONTEND_URL || 'https://planning-poker-frontend.onrender.com',
+        'http://localhost:3000',
+        'http://localhost:5173'
+      ]
+    : true, // Allow all origins in development
+  methods: ['GET', 'POST'],
+  credentials: true,
+  allowEIO3: true
+};
+
 const io = new SocketIOServer(server, {
-  cors: corsOptions,
-  transports: ['websocket', 'polling'],
+  cors: socketCorsOptions,
+  transports: ['polling', 'websocket'],
   pingTimeout: 60000,
   pingInterval: 25000,
+  allowEIO3: true
 });
 
 // Rate limiting
