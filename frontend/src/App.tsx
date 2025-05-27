@@ -11,7 +11,7 @@ function App() {
 
   useEffect(() => {
     // Skip warmup in test environment
-    if ((global as any).__TEST_DISABLE_WARMUP__) {
+    if (typeof global !== 'undefined' && (global as any).__TEST_DISABLE_WARMUP__) {
       setIsWarmingUp(false);
       return;
     }
