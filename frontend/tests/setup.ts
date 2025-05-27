@@ -53,3 +53,6 @@ global.IntersectionObserver = class IntersectionObserver {
   disconnect() {}
   takeRecords() { return []; }
 } as any;
+
+// Add a global flag to disable warmup in tests
+(global as any).__TEST_DISABLE_WARMUP__ = true;
