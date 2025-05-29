@@ -346,4 +346,83 @@ describe('SessionService', () => {
       }).toThrow('Facilitator not found');
     });
   });
+
+  describe('Facilitator Transfer', () => {
+    let session: Session;
+    let facilitatorId: string;
+    let memberId: string;
+
+    beforeEach(() => {
+      // Create session with initial facilitator
+      const result = sessionService.createSession({
+        title: 'Test Session',
+        facilitatorName: 'Original Facilitator',
+        scale: 'FIBONACCI'
+      });
+      session = result.session;
+      facilitatorId = result.participantId;
+
+      // Add a member to the session
+      const memberResult = sessionService.joinSession({
+        sessionCode: session.code,
+        participantName: 'Test Member'
+      });
+      memberId = memberResult!.participantId;
+    });
+
+    it('should transfer facilitator role from current facilitator to member successfully', () => {
+      const result = sessionService.transferFacilitatorRole(session.id, facilitatorId, memberId);
+
+      expect(result).toBeDefined();
+      expect(result!.participants.find(p => p.id === facilitatorId)!.role).toBe('member');
+      expect(result!.participants.find(p => p.id === memberId)!.role).toBe('facilitator');
+      expect(result!.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it('should throw error when non-facilitator tries to transfer role', () => {
+      expect(() => {
+        sessionService.transferFacilitatorRole(session.id, memberId, facilitatorId);
+      }).toThrow('Only facilitators can transfer facilitator role');
+    });
+
+    it('should throw error when session does not exist', () => {
+      const result = sessionService.transferFacilitatorRole('non-existent-session', facilitatorId, memberId);
+      expect(result).toBeNull();
+    });
+
+    it('should throw error when current facilitator does not exist', () => {
+      expect(() => {
+        sessionService.transferFacilitatorRole(session.id, 'non-existent-facilitator', memberId);
+      }).toThrow('Only facilitators can transfer facilitator role');
+    });
+
+    it('should throw error when new facilitator does not exist', () => {
+      expect(() => {
+        sessionService.transferFacilitatorRole(session.id, facilitatorId, 'non-existent-member');
+      }).toThrow('New facilitator not found in session');
+    });
+
+    it('should throw error when trying to transfer to current facilitator', () => {
+      expect(() => {
+        sessionService.transferFacilitatorRole(session.id, facilitatorId, facilitatorId);
+      }).toThrow('Cannot transfer facilitator role to current facilitator');
+    });
+
+    it('should handle multiple members and maintain other participants unchanged', () => {
+      // Add another member
+      const member2Result = sessionService.joinSession({
+        sessionCode: session.code,
+        participantName: 'Test Member 2'
+      });
+      const member2Id = member2Result!.participantId;
+
+      const result = sessionService.transferFacilitatorRole(session.id, facilitatorId, memberId);
+
+      expect(result).toBeDefined();
+      expect(result!.participants).toHaveLength(3);
+      expect(result!.participants.find(p => p.id === facilitatorId)!.role).toBe('member');
+      expect(result!.participants.find(p => p.id === memberId)!.role).toBe('facilitator');
+      expect(result!.participants.find(p => p.id === member2Id)!.role).toBe('member');
+    });
+  });
 });

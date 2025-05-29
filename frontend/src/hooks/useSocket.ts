@@ -121,6 +121,36 @@ export const useSocket = () => {
         }
       });
 
+      // Facilitator transfer events
+      socketService.on(SocketEvents.FACILITATOR_TRANSFERRED, (data: { 
+        sessionId: string;
+        oldFacilitatorId: string;
+        newFacilitatorId: string;
+        newFacilitatorName: string;
+      }) => {
+        console.info('👑 Frontend: Facilitator role transferred', {
+          from: data.oldFacilitatorId,
+          to: data.newFacilitatorName,
+          sessionId: data.sessionId
+        });
+        // Session will be updated via SESSION_UPDATED event
+        clearError();
+      });
+
+      socketService.on(SocketEvents.FACILITATOR_DISCONNECTED, (data: {
+        sessionId: string;
+        facilitatorId: string;
+        facilitatorName: string;
+        disconnectedAt: Date;
+      }) => {
+        console.info('🔌 Frontend: Facilitator disconnected', {
+          facilitator: data.facilitatorName,
+          disconnectedAt: data.disconnectedAt,
+          sessionId: data.sessionId
+        });
+        // This will trigger the volunteer UI modal
+      });
+
       // Error handling
       socketService.on(SocketEvents.ERROR, (data: { message: string; code?: string }) => {
         console.error('Socket error:', data);
@@ -265,6 +295,21 @@ export const useSocket = () => {
     }
   }, [clearError, setError]);
 
+  const transferFacilitator = useCallback((newFacilitatorId: string) => {
+    if (!socketService.connected) {
+      setError('Not connected to server');
+      return;
+    }
+
+    try {
+      socketService.transferFacilitator(newFacilitatorId);
+      clearError();
+    } catch (error) {
+      console.error('Failed to transfer facilitator role:', error);
+      setError('Failed to transfer facilitator role');
+    }
+  }, [clearError, setError]);
+
   return {
     connected: socketService.connected,
     sessionId: socketService.currentSessionId,
@@ -280,5 +325,6 @@ export const useSocket = () => {
     revealVotes: revealVotesAction,
     setFinalEstimate: setFinalEstimateAction,
     revoteStory,
+    transferFacilitator,
   };
 };

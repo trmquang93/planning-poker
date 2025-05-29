@@ -473,4 +473,131 @@ describe('Socket.IO Integration', () => {
       });
     });
   });
+
+  describe('Facilitator Transfer', () => {
+    beforeEach(async () => {
+      // Connect both clients and have them join the same session
+      clientSocket1 = await connectClient();
+      clientSocket2 = await connectClient();
+
+      // Socket 1 creates session (becomes facilitator)
+      const sessionUpdatedPromise1 = new Promise((resolve) => {
+        clientSocket1.on(SocketEvents.SESSION_UPDATED, resolve);
+      });
+
+      clientSocket1.emit(SocketEvents.JOIN_SESSION, {
+        sessionId: testSession.id,
+        participantName: 'Facilitator'
+      });
+
+      await sessionUpdatedPromise1;
+
+      // Socket 2 joins session (becomes member)
+      const sessionUpdatedPromise2 = new Promise((resolve) => {
+        clientSocket2.on(SocketEvents.SESSION_UPDATED, resolve);
+      });
+
+      clientSocket2.emit(SocketEvents.JOIN_SESSION, {
+        sessionId: testSession.id,
+        participantName: 'Member'
+      });
+
+      await sessionUpdatedPromise2;
+    });
+
+    it('should transfer facilitator role successfully', async () => {
+      // Get the member's participant ID from the session
+      const session = sessionService.getSessionById(testSession.id);
+      const memberParticipant = session?.participants.find(p => p.name === 'Member');
+      
+      expect(memberParticipant).toBeDefined();
+
+      // Set up promises for both events
+      const sessionUpdatedPromise1 = new Promise((resolve) => {
+        clientSocket1.on(SocketEvents.SESSION_UPDATED, resolve);
+      });
+
+      const sessionUpdatedPromise2 = new Promise((resolve) => {
+        clientSocket2.on(SocketEvents.SESSION_UPDATED, resolve);
+      });
+
+      const facilitatorTransferredPromise1 = new Promise((resolve) => {
+        clientSocket1.on(SocketEvents.FACILITATOR_TRANSFERRED, resolve);
+      });
+
+      const facilitatorTransferredPromise2 = new Promise((resolve) => {
+        clientSocket2.on(SocketEvents.FACILITATOR_TRANSFERRED, resolve);
+      });
+
+      // Facilitator transfers role to member
+      clientSocket1.emit(SocketEvents.TRANSFER_FACILITATOR, {
+        newFacilitatorId: memberParticipant!.id
+      });
+
+      // Wait for all events
+      const [sessionUpdate1, sessionUpdate2, transferEvent1, transferEvent2] = await Promise.all([
+        sessionUpdatedPromise1,
+        sessionUpdatedPromise2,
+        facilitatorTransferredPromise1,
+        facilitatorTransferredPromise2
+      ]);
+
+      // Verify session updates
+      expect((sessionUpdate1 as any).session.participants).toHaveLength(2);
+      expect((sessionUpdate2 as any).session.participants).toHaveLength(2);
+
+      // Find participants in updated session
+      const updatedFacilitator = (sessionUpdate1 as any).session.participants.find((p: any) => p.name === 'Facilitator');
+      const updatedMember = (sessionUpdate1 as any).session.participants.find((p: any) => p.name === 'Member');
+
+      expect(updatedFacilitator.role).toBe('member');
+      expect(updatedMember.role).toBe('facilitator');
+
+      // Verify transfer events
+      expect(transferEvent1).toMatchObject({
+        sessionId: testSession.id,
+        newFacilitatorId: memberParticipant!.id,
+        newFacilitatorName: 'Member'
+      });
+      expect(transferEvent2).toEqual(transferEvent1);
+    });
+
+    it('should reject transfer from non-facilitator', async () => {
+      // Get the facilitator's participant ID
+      const session = sessionService.getSessionById(testSession.id);
+      const facilitatorParticipant = session?.participants.find(p => p.name === 'Facilitator');
+
+      const errorPromise = new Promise((resolve) => {
+        clientSocket2.on(SocketEvents.ERROR, resolve);
+      });
+
+      // Member tries to transfer facilitator role (should fail)
+      clientSocket2.emit(SocketEvents.TRANSFER_FACILITATOR, {
+        newFacilitatorId: facilitatorParticipant!.id
+      });
+
+      const error = await errorPromise;
+      expect(error).toMatchObject({
+        message: 'Only facilitators can transfer facilitator role',
+        code: 'TRANSFER_FACILITATOR_FAILED'
+      });
+    });
+
+    it('should reject invalid transfer data', async () => {
+      const errorPromise = new Promise((resolve) => {
+        clientSocket1.on(SocketEvents.ERROR, resolve);
+      });
+
+      // Send invalid data
+      clientSocket1.emit(SocketEvents.TRANSFER_FACILITATOR, {
+        invalidField: 'invalid'
+      });
+
+      const error = await errorPromise;
+      expect(error).toMatchObject({
+        message: 'Invalid transfer facilitator request',
+        code: 'INVALID_REQUEST'
+      });
+    });
+  });
 });

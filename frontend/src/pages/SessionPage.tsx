@@ -20,6 +20,7 @@ const SessionPage = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [hasJoinedSocket, setHasJoinedSocket] = useState(false);
+  const [pendingTransfer, setPendingTransfer] = useState<{ participantId: string; participantName: string } | null>(null);
   
   const {
     session,
@@ -45,7 +46,8 @@ const SessionPage = () => {
     submitVote, 
     revealVotes, 
     setFinalEstimate,
-    revoteStory
+    revoteStory,
+    transferFacilitator
   } = useSocket();
 
   // Initialize session data
@@ -197,6 +199,24 @@ const SessionPage = () => {
     }
   };
 
+  const handleTransferFacilitator = (newFacilitatorId: string) => {
+    const participant = session?.participants.find(p => p.id === newFacilitatorId);
+    if (participant) {
+      setPendingTransfer({ participantId: newFacilitatorId, participantName: participant.name });
+    }
+  };
+
+  const confirmTransferFacilitator = () => {
+    if (pendingTransfer) {
+      transferFacilitator(pendingTransfer.participantId);
+      setPendingTransfer(null);
+    }
+  };
+
+  const cancelTransferFacilitator = () => {
+    setPendingTransfer(null);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -341,6 +361,17 @@ const SessionPage = () => {
                       {participant.role === 'facilitator' && (
                         <span className="bg-blue-100 text-blue-800 px-2.5 py-0.5 text-xs font-medium rounded-full">Facilitator</span>
                       )}
+                      {/* Show "Make Facilitator" button for members if current user is facilitator */}
+                      {participant.role === 'member' && 
+                       currentParticipant.role === 'facilitator' && 
+                       participant.id !== currentParticipant.id && (
+                        <button
+                          onClick={() => handleTransferFacilitator(participant.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 text-xs font-medium rounded transition-colors"
+                        >
+                          Make Facilitator
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -396,6 +427,40 @@ const SessionPage = () => {
           </div>
         </div>
       </main>
+
+      {/* Facilitator Transfer Confirmation Modal */}
+      {pendingTransfer && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+          <div className="relative p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Transfer Facilitator Role
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Are you sure you want to transfer your facilitator role to{' '}
+                <span className="font-medium text-gray-900">{pendingTransfer.participantName}</span>?
+              </p>
+              <p className="text-xs text-gray-400 mb-6">
+                You will become a regular member and will no longer be able to manage stories or control voting.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={cancelTransferFacilitator}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmTransferFacilitator}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Transfer Role
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

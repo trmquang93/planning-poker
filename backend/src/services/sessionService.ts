@@ -517,6 +517,43 @@ export class SessionService {
   }
 
   /**
+   * Transfer facilitator role from current facilitator to another participant
+   */
+  public transferFacilitatorRole(sessionId: string, currentFacilitatorId: string, newFacilitatorId: string): Session | null {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return null;
+    }
+
+    // Verify current facilitator permissions
+    const currentFacilitator = session.participants.find(p => p.id === currentFacilitatorId && p.role === 'facilitator');
+    if (!currentFacilitator) {
+      throw new Error('Only facilitators can transfer facilitator role');
+    }
+
+    // Prevent transferring to self
+    if (currentFacilitatorId === newFacilitatorId) {
+      throw new Error('Cannot transfer facilitator role to current facilitator');
+    }
+
+    // Verify new facilitator exists in session
+    const newFacilitator = session.participants.find(p => p.id === newFacilitatorId);
+    if (!newFacilitator) {
+      throw new Error('New facilitator not found in session');
+    }
+
+    // Transfer roles
+    currentFacilitator.role = 'member';
+    newFacilitator.role = 'facilitator';
+    
+    // Update session timestamp
+    session.updatedAt = new Date();
+    sessions.set(sessionId, session);
+
+    return session;
+  }
+
+  /**
    * Clear all sessions (for testing)
    */
   public clearAllSessions(): void {
