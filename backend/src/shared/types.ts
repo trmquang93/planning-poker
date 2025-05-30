@@ -81,6 +81,10 @@ export const SetFinalEstimateRequestSchema = z.object({
   estimate: z.union([z.string(), z.number()]),
 });
 
+export const TransferFacilitatorRequestSchema = z.object({
+  newFacilitatorId: z.string(),
+});
+
 // Socket event schemas
 export const SocketEvents = {
   // Client to server
@@ -93,6 +97,8 @@ export const SocketEvents = {
   SET_FINAL_ESTIMATE: 'set_final_estimate',
   REVOTE_STORY: 'revote_story',
   NEXT_STORY: 'next_story',
+  TRANSFER_FACILITATOR: 'transfer_facilitator',
+  REQUEST_FACILITATOR: 'request_facilitator',
   
   // Server to client
   SESSION_UPDATED: 'session_updated',
@@ -104,6 +110,8 @@ export const SocketEvents = {
   VOTES_REVEALED: 'votes_revealed',
   FINAL_ESTIMATE_SET: 'final_estimate_set',
   REVOTE_STARTED: 'revote_started',
+  FACILITATOR_DISCONNECTED: 'facilitator_disconnected',
+  FACILITATOR_TRANSFERRED: 'facilitator_transferred',
   ERROR: 'error',
 } as const;
 
@@ -128,6 +136,22 @@ export const ErrorEventSchema = z.object({
   code: z.string().optional(),
 });
 
+export const FacilitatorTransferredEventSchema = z.object({
+  sessionId: z.string(),
+  oldFacilitatorId: z.string(),
+  newFacilitatorId: z.string(),
+  newFacilitatorName: z.string(),
+});
+
+export const FacilitatorDisconnectedEventSchema = z.object({
+  sessionId: z.string(),
+  facilitatorId: z.string(),
+  facilitatorName: z.string(),
+  disconnectedAt: z.union([z.date(), z.string()]).transform((val) => 
+    typeof val === 'string' ? new Date(val) : val
+  ),
+});
+
 // Type exports
 export type Participant = z.infer<typeof ParticipantSchema>;
 export type Story = z.infer<typeof StorySchema>;
@@ -138,9 +162,12 @@ export type JoinSessionRequest = z.infer<typeof JoinSessionRequestSchema>;
 export type AddStoryRequest = z.infer<typeof AddStoryRequestSchema>;
 export type SubmitVoteRequest = z.infer<typeof SubmitVoteRequestSchema>;
 export type SetFinalEstimateRequest = z.infer<typeof SetFinalEstimateRequestSchema>;
+export type TransferFacilitatorRequest = z.infer<typeof TransferFacilitatorRequestSchema>;
 
 export type JoinSessionEvent = z.infer<typeof JoinSessionEventSchema>;
 export type ErrorEvent = z.infer<typeof ErrorEventSchema>;
+export type FacilitatorTransferredEvent = z.infer<typeof FacilitatorTransferredEventSchema>;
+export type FacilitatorDisconnectedEvent = z.infer<typeof FacilitatorDisconnectedEventSchema>;
 
 // Session response types
 export interface CreateSessionResponse {

@@ -313,6 +313,19 @@ class SocketService {
   }
 
   /**
+   * Transfer facilitator role to another participant
+   */
+  public transferFacilitator(newFacilitatorId: string): void {
+    if (!this.isConnected || !this.socket) {
+      throw new Error('Not connected to server');
+    }
+
+    this.socket.emit(SocketEvents.TRANSFER_FACILITATOR, {
+      newFacilitatorId,
+    });
+  }
+
+  /**
    * Add event listener
    */
   public on(event: string, callback: (...args: any[]) => void): void {
@@ -386,6 +399,8 @@ class SocketService {
       SocketEvents.VOTES_REVEALED,
       SocketEvents.FINAL_ESTIMATE_SET,
       SocketEvents.REVOTE_STARTED,
+      SocketEvents.FACILITATOR_TRANSFERRED,
+      SocketEvents.FACILITATOR_DISCONNECTED,
       SocketEvents.ERROR,
     ];
 

@@ -120,7 +120,17 @@ export const useSessionStore = create<SessionState>()(
       ...initialState,
 
       // Basic setters
-      setSession: (session) => set({ session }, false, 'setSession'),
+      setSession: (session) => set((state) => {
+        // Update currentParticipant with latest data from the session
+        const updatedCurrentParticipant = state.currentParticipant 
+          ? session.participants.find(p => p.id === state.currentParticipant?.id) || state.currentParticipant
+          : state.currentParticipant;
+        
+        return {
+          session,
+          currentParticipant: updatedCurrentParticipant
+        };
+      }, false, 'setSession'),
       
       setCurrentParticipant: (participant) => set({ currentParticipant: participant }, false, 'setCurrentParticipant'),
       

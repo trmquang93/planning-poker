@@ -1,5 +1,5 @@
 import type { Server as SocketIOServer, Socket } from 'socket.io';
-import { SocketEvents, JoinSessionEventSchema } from '../shared/types';
+import { SocketEvents, JoinSessionEventSchema, TransferFacilitatorRequestSchema } from '../shared/types';
 import { SessionService } from './sessionService';
 
 const sessionService = SessionService.getInstance();
@@ -465,6 +465,70 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
         socket.emit(SocketEvents.ERROR, {
           message: error instanceof Error ? error.message : 'Failed to start revoting',
           code: 'REVOTE_FAILED',
+        });
+      }
+    });
+
+    // Handle facilitator transfer
+    socket.on(SocketEvents.TRANSFER_FACILITATOR, (data) => {
+      try {
+        // Validate request data
+        const validationResult = TransferFacilitatorRequestSchema.safeParse(data);
+        if (!validationResult.success) {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'Invalid transfer facilitator request',
+            code: 'INVALID_REQUEST',
+          });
+          return;
+        }
+
+        const connection = socketToSession.get(socket.id);
+        if (!connection) {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'Not connected to any session',
+            code: 'NOT_IN_SESSION',
+          });
+          return;
+        }
+
+        // Transfer facilitator role using SessionService
+        const updatedSession = sessionService.transferFacilitatorRole(
+          connection.sessionId,
+          connection.participantId,
+          data.newFacilitatorId
+        );
+
+        if (!updatedSession) {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'Failed to transfer facilitator role',
+            code: 'TRANSFER_FACILITATOR_FAILED',
+          });
+          return;
+        }
+
+        // Get participant names for the event
+        const oldFacilitator = updatedSession.participants.find(p => p.id === connection.participantId);
+        const newFacilitator = updatedSession.participants.find(p => p.id === data.newFacilitatorId);
+
+        // Broadcast updated session to all participants
+        io.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {
+          session: updatedSession,
+        });
+
+        // Broadcast facilitator transferred event
+        io.to(connection.sessionId).emit(SocketEvents.FACILITATOR_TRANSFERRED, {
+          sessionId: connection.sessionId,
+          oldFacilitatorId: connection.participantId,
+          newFacilitatorId: data.newFacilitatorId,
+          newFacilitatorName: newFacilitator?.name || 'Unknown',
+        });
+
+        console.info(`Facilitator role transferred from ${oldFacilitator?.name} to ${newFacilitator?.name} in session ${connection.sessionId}`);
+      } catch (error) {
+        console.error('Error transferring facilitator role:', error);
+        socket.emit(SocketEvents.ERROR, {
+          message: error instanceof Error ? error.message : 'Failed to transfer facilitator role',
+          code: 'TRANSFER_FACILITATOR_FAILED',
         });
       }
     });
