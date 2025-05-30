@@ -27,10 +27,12 @@ const SessionPage = () => {
     currentParticipant,
     connectionStatus,
     error,
+    facilitatorDisconnected,
     setSession,
     setCurrentParticipant,
     setError,
     clearError,
+    clearFacilitatorDisconnected,
     reset,
     loadPersistedSession,
     saveSession,
@@ -47,7 +49,8 @@ const SessionPage = () => {
     revealVotes, 
     setFinalEstimate,
     revoteStory,
-    transferFacilitator
+    transferFacilitator,
+    requestFacilitator
   } = useSocket();
 
   // Initialize session data
@@ -215,6 +218,15 @@ const SessionPage = () => {
 
   const cancelTransferFacilitator = () => {
     setPendingTransfer(null);
+  };
+
+  const handleVolunteerFacilitator = () => {
+    requestFacilitator();
+    clearFacilitatorDisconnected();
+  };
+
+  const handleDismissVolunteerModal = () => {
+    clearFacilitatorDisconnected();
   };
 
   if (isLoading) {
@@ -457,6 +469,57 @@ const SessionPage = () => {
                   Transfer Role
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Volunteer Facilitator Modal */}
+      {facilitatorDisconnected && currentParticipant?.role === 'member' && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+          <div className="relative p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3 text-center">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                <svg
+                  className="h-6 w-6 text-yellow-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Facilitator Disconnected
+              </h3>
+              <p className="text-sm text-gray-500 mb-2">
+                <span className="font-medium text-gray-900">{facilitatorDisconnected.facilitatorName}</span> has disconnected from the session.
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Would you like to volunteer to become the new facilitator?
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={handleDismissVolunteerModal}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                >
+                  No, Wait
+                </button>
+                <button
+                  onClick={handleVolunteerFacilitator}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Yes, Volunteer
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-4">
+                As facilitator, you'll be able to manage stories, start voting, and control the session flow.
+              </p>
             </div>
           </div>
         </div>

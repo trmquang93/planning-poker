@@ -19,6 +19,8 @@ export const useSocket = () => {
     setFinalEstimate,
     setError,
     clearError,
+    setFacilitatorDisconnected,
+    clearFacilitatorDisconnected,
     session,
     currentParticipant,
   } = useSessionStore();
@@ -135,6 +137,8 @@ export const useSocket = () => {
         });
         // Session will be updated via SESSION_UPDATED event
         clearError();
+        // Clear facilitator disconnected state since we now have a facilitator
+        clearFacilitatorDisconnected();
       });
 
       socketService.on(SocketEvents.FACILITATOR_DISCONNECTED, (data: {
@@ -148,7 +152,8 @@ export const useSocket = () => {
           disconnectedAt: data.disconnectedAt,
           sessionId: data.sessionId
         });
-        // This will trigger the volunteer UI modal
+        // Show the volunteer UI modal
+        setFacilitatorDisconnected(data.facilitatorName, new Date(data.disconnectedAt));
       });
 
       // Error handling
@@ -310,6 +315,21 @@ export const useSocket = () => {
     }
   }, [clearError, setError]);
 
+  const requestFacilitator = useCallback(() => {
+    if (!socketService.connected) {
+      setError('Not connected to server');
+      return;
+    }
+
+    try {
+      socketService.requestFacilitator();
+      clearError();
+    } catch (error) {
+      console.error('Failed to request facilitator role:', error);
+      setError('Failed to request facilitator role');
+    }
+  }, [clearError, setError]);
+
   return {
     connected: socketService.connected,
     sessionId: socketService.currentSessionId,
@@ -326,5 +346,6 @@ export const useSocket = () => {
     setFinalEstimate: setFinalEstimateAction,
     revoteStory,
     transferFacilitator,
+    requestFacilitator,
   };
 };

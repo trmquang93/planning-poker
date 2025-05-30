@@ -525,6 +525,30 @@ export class SessionService {
       return null;
     }
 
+    // Handle volunteer promotion (when currentFacilitatorId is "system")
+    if (currentFacilitatorId === 'system') {
+      // This is a volunteer promotion - no need to verify current facilitator
+      // Just verify new facilitator exists and is a member
+      const newFacilitator = session.participants.find(p => p.id === newFacilitatorId);
+      if (!newFacilitator) {
+        throw new Error('New facilitator not found in session');
+      }
+
+      if (newFacilitator.role !== 'member') {
+        throw new Error('Only members can volunteer to become facilitator');
+      }
+
+      // Promote the member to facilitator
+      newFacilitator.role = 'facilitator';
+      
+      // Update session timestamp
+      session.updatedAt = new Date();
+      sessions.set(sessionId, session);
+
+      return session;
+    }
+
+    // Regular facilitator transfer (not volunteer promotion)
     // Verify current facilitator permissions
     const currentFacilitator = session.participants.find(p => p.id === currentFacilitatorId && p.role === 'facilitator');
     if (!currentFacilitator) {

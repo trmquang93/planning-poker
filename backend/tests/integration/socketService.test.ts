@@ -507,8 +507,8 @@ describe('Socket.IO Integration', () => {
 
     it('should transfer facilitator role successfully', async () => {
       // Get the member's participant ID from the session
-      const session = sessionService.getSessionById(testSession.id);
-      const memberParticipant = session?.participants.find(p => p.name === 'Member');
+      const session = sessionService.getSession(testSession.id);
+      const memberParticipant = session?.participants.find((p: any) => p.name === 'Member');
       
       expect(memberParticipant).toBeDefined();
 
@@ -564,8 +564,8 @@ describe('Socket.IO Integration', () => {
 
     it('should reject transfer from non-facilitator', async () => {
       // Get the facilitator's participant ID
-      const session = sessionService.getSessionById(testSession.id);
-      const facilitatorParticipant = session?.participants.find(p => p.name === 'Facilitator');
+      const session = sessionService.getSession(testSession.id);
+      const facilitatorParticipant = session?.participants.find((p: any) => p.name === 'Facilitator');
 
       const errorPromise = new Promise((resolve) => {
         clientSocket2.on(SocketEvents.ERROR, resolve);

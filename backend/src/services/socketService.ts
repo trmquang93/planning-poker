@@ -7,6 +7,9 @@ const sessionService = SessionService.getInstance();
 // Track socket connections
 const socketToSession = new Map<string, { sessionId: string; participantId: string }>();
 
+// Track facilitator disconnection timeouts
+const facilitatorTimeouts = new Map<string, NodeJS.Timeout>();
+
 export const setupSocketHandlers = (io: SocketIOServer): void => {
   io.on('connection', (socket: Socket) => {
     console.info(`Client connected: ${socket.id} from origin: ${socket.request.headers.origin}`);
@@ -510,6 +513,14 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
         const oldFacilitator = updatedSession.participants.find(p => p.id === connection.participantId);
         const newFacilitator = updatedSession.participants.find(p => p.id === data.newFacilitatorId);
 
+        // Clear any pending facilitator timeout for this session
+        const timeoutKey = connection.sessionId;
+        if (facilitatorTimeouts.has(timeoutKey)) {
+          clearTimeout(facilitatorTimeouts.get(timeoutKey)!);
+          facilitatorTimeouts.delete(timeoutKey);
+          console.info(`Cleared facilitator timeout for session ${connection.sessionId} due to manual transfer`);
+        }
+
         // Broadcast updated session to all participants
         io.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {
           session: updatedSession,
@@ -529,6 +540,94 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
         socket.emit(SocketEvents.ERROR, {
           message: error instanceof Error ? error.message : 'Failed to transfer facilitator role',
           code: 'TRANSFER_FACILITATOR_FAILED',
+        });
+      }
+    });
+
+    // Handle facilitator volunteer request
+    socket.on(SocketEvents.REQUEST_FACILITATOR, (data) => {
+      try {
+        const connection = socketToSession.get(socket.id);
+        if (!connection) {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'Not connected to any session',
+            code: 'NOT_IN_SESSION',
+          });
+          return;
+        }
+
+        // Get the current session
+        const session = sessionService.getSession(connection.sessionId);
+        if (!session) {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'Session not found',
+            code: 'SESSION_NOT_FOUND',
+          });
+          return;
+        }
+
+        // Check if there are any online facilitators
+        const onlineFacilitators = session.participants.filter(p => p.role === 'facilitator' && p.isOnline);
+        if (onlineFacilitators.length > 0) {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'There is already an online facilitator',
+            code: 'FACILITATOR_AVAILABLE',
+          });
+          return;
+        }
+
+        // Check if the requesting participant is a member
+        const requestingParticipant = session.participants.find(p => p.id === connection.participantId);
+        if (!requestingParticipant || requestingParticipant.role !== 'member') {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'Only members can volunteer to become facilitator',
+            code: 'INVALID_VOLUNTEER',
+          });
+          return;
+        }
+
+        // Promote the requesting participant to facilitator
+        const updatedSession = sessionService.transferFacilitatorRole(
+          connection.sessionId,
+          'system', // Use system as the old facilitator ID when promoting volunteer
+          connection.participantId
+        );
+
+        if (!updatedSession) {
+          socket.emit(SocketEvents.ERROR, {
+            message: 'Failed to promote volunteer to facilitator',
+            code: 'VOLUNTEER_PROMOTION_FAILED',
+          });
+          return;
+        }
+
+        // Clear the facilitator timeout for this session
+        const timeoutKey = connection.sessionId;
+        if (facilitatorTimeouts.has(timeoutKey)) {
+          clearTimeout(facilitatorTimeouts.get(timeoutKey)!);
+          facilitatorTimeouts.delete(timeoutKey);
+          console.info(`Cleared facilitator timeout for session ${connection.sessionId} due to volunteer promotion`);
+        }
+
+        // Broadcast updated session to all participants
+        io.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {
+          session: updatedSession,
+        });
+
+        // Broadcast facilitator transferred event (volunteer promoted)
+        io.to(connection.sessionId).emit(SocketEvents.FACILITATOR_TRANSFERRED, {
+          sessionId: connection.sessionId,
+          oldFacilitatorId: 'system',
+          newFacilitatorId: connection.participantId,
+          newFacilitatorName: requestingParticipant.name,
+        });
+
+        console.info(`${requestingParticipant.name} volunteered and was promoted to facilitator in session ${connection.sessionId}`);
+      } catch (error) {
+        console.error('Error handling facilitator volunteer request:', error);
+        socket.emit(SocketEvents.ERROR, {
+          message: error instanceof Error ? error.message : 'Failed to process volunteer request',
+          code: 'VOLUNTEER_REQUEST_FAILED',
         });
       }
     });
@@ -556,6 +655,11 @@ async function handleParticipantLeave(socket: Socket, io: SocketIOServer): Promi
   }
 
   try {
+    // Get the session before updating status to check if participant was a facilitator
+    const sessionBeforeUpdate = sessionService.getSession(connection.sessionId);
+    const departingParticipant = sessionBeforeUpdate?.participants.find(p => p.id === connection.participantId);
+    const wasFacilitator = departingParticipant?.role === 'facilitator';
+
     // Update participant online status
     const updatedSession = sessionService.updateParticipantStatus(
       connection.sessionId, 
@@ -569,6 +673,61 @@ async function handleParticipantLeave(socket: Socket, io: SocketIOServer): Promi
         participantId: connection.participantId,
         sessionId: connection.sessionId,
       });
+
+      // Check if a facilitator disconnected and there are still members online
+      if (wasFacilitator && updatedSession.participants.some(p => p.isOnline)) {
+        // Check if there are any other online facilitators
+        const onlineFacilitators = updatedSession.participants.filter(p => p.role === 'facilitator' && p.isOnline);
+        
+        if (onlineFacilitators.length === 0) {
+          // No online facilitators left - start the timeout and notify members
+          console.info(`Facilitator ${departingParticipant?.name} disconnected from session ${connection.sessionId}. Starting 2-minute timeout.`);
+          
+          // Emit facilitator disconnected event immediately
+          io.to(connection.sessionId).emit(SocketEvents.FACILITATOR_DISCONNECTED, {
+            sessionId: connection.sessionId,
+            facilitatorId: connection.participantId,
+            facilitatorName: departingParticipant?.name || 'Unknown',
+            disconnectedAt: new Date(),
+          });
+
+          // Set up 2-minute timeout
+          const timeoutKey = connection.sessionId;
+          
+          // Clear any existing timeout for this session
+          if (facilitatorTimeouts.has(timeoutKey)) {
+            clearTimeout(facilitatorTimeouts.get(timeoutKey)!);
+          }
+
+          // Start new timeout
+          const timeout = setTimeout(() => {
+            console.info(`Facilitator timeout expired for session ${connection.sessionId}. Checking for volunteers.`);
+            
+            // Get current session state
+            const currentSession = sessionService.getSession(connection.sessionId);
+            if (!currentSession) {
+              facilitatorTimeouts.delete(timeoutKey);
+              return;
+            }
+
+            // Check if there are still no online facilitators
+            const currentOnlineFacilitators = currentSession.participants.filter(p => p.role === 'facilitator' && p.isOnline);
+            if (currentOnlineFacilitators.length === 0) {
+              // Still no facilitators - the volunteer UI should already be showing
+              // No automatic promotion - let the volunteer system handle it
+              console.info(`No facilitators available for session ${connection.sessionId}. Volunteer system should be active.`);
+            } else {
+              // A facilitator came back online during the timeout period
+              console.info(`Facilitator returned during timeout period for session ${connection.sessionId}. Canceling volunteer system.`);
+            }
+
+            // Clean up the timeout
+            facilitatorTimeouts.delete(timeoutKey);
+          }, 2 * 60 * 1000); // 2 minutes
+
+          facilitatorTimeouts.set(timeoutKey, timeout);
+        }
+      }
 
       // Broadcast updated session to ALL remaining participants
       io.to(connection.sessionId).emit(SocketEvents.SESSION_UPDATED, {

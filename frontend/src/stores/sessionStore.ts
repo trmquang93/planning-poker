@@ -70,6 +70,12 @@ interface SessionState {
   myVote: string | number | null;
   votingInProgress: boolean;
   
+  // Facilitator disconnection state
+  facilitatorDisconnected: {
+    facilitatorName: string;
+    disconnectedAt: Date;
+  } | null;
+  
   // Actions
   setSession: (session: Session) => void;
   setCurrentParticipant: (participant: Participant) => void;
@@ -92,6 +98,10 @@ interface SessionState {
   revealVotes: (storyId: string, votes: Record<string, string | number>) => void;
   setFinalEstimate: (storyId: string, estimate: string | number) => void;
   
+  // Facilitator disconnection actions
+  setFacilitatorDisconnected: (facilitatorName: string, disconnectedAt: Date) => void;
+  clearFacilitatorDisconnected: () => void;
+  
   // Utility actions
   reset: () => void;
   clearError: () => void;
@@ -112,6 +122,7 @@ const initialState = {
   currentStory: null,
   myVote: null,
   votingInProgress: false,
+  facilitatorDisconnected: null,
 };
 
 export const useSessionStore = create<SessionState>()(
@@ -288,6 +299,18 @@ export const useSessionStore = create<SessionState>()(
           }
         };
       }, false, 'setFinalEstimate'),
+
+      // Facilitator disconnection actions
+      setFacilitatorDisconnected: (facilitatorName, disconnectedAt) => set({
+        facilitatorDisconnected: {
+          facilitatorName,
+          disconnectedAt,
+        }
+      }, false, 'setFacilitatorDisconnected'),
+
+      clearFacilitatorDisconnected: () => set({
+        facilitatorDisconnected: null
+      }, false, 'clearFacilitatorDisconnected'),
 
       // Utility actions
       reset: () => set(initialState, false, 'reset'),

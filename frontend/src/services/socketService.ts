@@ -326,6 +326,17 @@ class SocketService {
   }
 
   /**
+   * Request to become facilitator (volunteer system)
+   */
+  public requestFacilitator(): void {
+    if (!this.isConnected || !this.socket) {
+      throw new Error('Not connected to server');
+    }
+
+    this.socket.emit(SocketEvents.REQUEST_FACILITATOR, {});
+  }
+
+  /**
    * Add event listener
    */
   public on(event: string, callback: (...args: any[]) => void): void {
