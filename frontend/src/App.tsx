@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import SessionPage from './pages/SessionPage';
 import NotFoundPage from './pages/NotFoundPage';
 import { apiService } from './services/apiService';
+import { keepAliveService } from './services/keepAliveService';
 
 function App() {
   const [isWarmingUp, setIsWarmingUp] = useState(true);
@@ -23,6 +24,11 @@ function App() {
       try {
         const success = await apiService.warmupServer();
         setWarmupFailed(!success);
+        
+        // Start keep-alive service after successful warmup
+        if (success) {
+          keepAliveService.start();
+        }
       } catch (error) {
         console.error('Failed to warmup backend:', error);
         setWarmupFailed(true);
@@ -32,6 +38,11 @@ function App() {
     };
 
     warmupBackend();
+
+    // Cleanup keep-alive service on unmount
+    return () => {
+      keepAliveService.stop();
+    };
   }, []);
 
   // Show a subtle loading indicator during warmup

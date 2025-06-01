@@ -93,6 +93,16 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// Keep-alive endpoint to prevent server sleep
+app.get('/keep-alive', (_req, res) => {
+  res.json({ 
+    status: 'alive',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    message: 'Server is awake'
+  });
+});
+
 // Handle OPTIONS requests for CORS preflight
 app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
