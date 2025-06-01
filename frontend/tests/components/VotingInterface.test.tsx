@@ -134,12 +134,12 @@ describe('VotingInterface', () => {
 
       expect(screen.getByText('Votes submitted: 0 / 2')).toBeInTheDocument();
       
-      // Should show indicators for all participants
-      const indicators = screen.getByTitle('John Facilitator: Not voted');
-      expect(indicators).toBeInTheDocument();
+      // Should show participant names directly in the UI
+      expect(screen.getByText('John Facilitator')).toBeInTheDocument();
+      expect(screen.getByText('Jane Member')).toBeInTheDocument();
       
-      const memberIndicator = screen.getByTitle('Jane Member: Not voted');
-      expect(memberIndicator).toBeInTheDocument();
+      // Should show their status
+      expect(screen.getAllByText('⏳ Pending')).toHaveLength(2);
     });
 
     it('should handle vote submission', async () => {
@@ -227,13 +227,21 @@ describe('VotingInterface', () => {
         />
       );
 
-      expect(screen.getByText('Vote Submitted')).toBeInTheDocument();
-      expect(screen.getByText('Your vote: 5')).toBeInTheDocument();
-      expect(screen.getByText('Waiting for other participants to vote...')).toBeInTheDocument();
-      expect(screen.getByText('1 / 2 votes submitted')).toBeInTheDocument();
+      expect(screen.getByText('✅ Your current vote:')).toBeInTheDocument();
+      // Check that the vote value is displayed in the status area
+      const voteDisplay = screen.getByText('✅ Your current vote:').parentElement;
+      expect(voteDisplay?.textContent).toContain('5');
+      expect(screen.getByText('Click another card to change your vote')).toBeInTheDocument();
+      expect(screen.getByText('Votes submitted: 1 / 2')).toBeInTheDocument();
+      
+      // Should show participant names and statuses
+      expect(screen.getByText('John Facilitator')).toBeInTheDocument();
+      expect(screen.getByText('Jane Member')).toBeInTheDocument();
+      expect(screen.getByText('✅ Voted')).toBeInTheDocument();
+      expect(screen.getByText('⏳ Pending')).toBeInTheDocument();
     });
 
-    it('should not allow voting when already voted', async () => {
+    it('should allow changing vote when already voted', async () => {
       const user = userEvent.setup();
       
       render(
@@ -244,33 +252,44 @@ describe('VotingInterface', () => {
         />
       );
 
-      // Should not see voting buttons when already voted
-      expect(screen.queryByRole('button', { name: '5' })).not.toBeInTheDocument();
-      expect(screen.getByText('Vote Submitted')).toBeInTheDocument();
+      // Should still see voting buttons to allow changing vote (different value than current vote)
+      expect(screen.getByRole('button', { name: '8' })).toBeInTheDocument();
+      expect(screen.getByText('✅ Your current vote:')).toBeInTheDocument();
+      expect(screen.getByText('Click another card to change your vote')).toBeInTheDocument();
+      
+      // Test changing vote by clicking a different button
+      await user.click(screen.getByRole('button', { name: '8' }));
+      expect(mockOnSubmitVote).toHaveBeenCalledWith('story-1', 8);
     });
 
-    it('should show hidden votes for other participants', () => {
-      const sessionWithHiddenVotes = {
+    it('should show both participants have voted', () => {
+      const sessionWithBothVotes = {
         ...mockSession,
         stories: [{
           ...mockSession.stories[0],
           votes: {
             'John Facilitator': 5,
-            'Jane Member': '***' // Hidden vote
+            'Jane Member': 8
           }
         }]
       };
 
       render(
         <VotingInterface
-          session={sessionWithHiddenVotes}
+          session={sessionWithBothVotes}
           currentParticipant={mockFacilitator}
           onSubmitVote={mockOnSubmitVote}
         />
       );
 
-      expect(screen.getByText('Your vote: 5')).toBeInTheDocument();
-      expect(screen.getByText('2 / 2 votes submitted')).toBeInTheDocument();
+      expect(screen.getByText('✅ Your current vote:')).toBeInTheDocument();
+      // Check that the vote value is displayed in the status area
+      const voteDisplay = screen.getByText('✅ Your current vote:').parentElement;
+      expect(voteDisplay?.textContent).toContain('5');
+      expect(screen.getByText('Votes submitted: 2 / 2')).toBeInTheDocument();
+      
+      // Both participants should show as voted
+      expect(screen.getAllByText('✅ Voted')).toHaveLength(2);
     });
   });
 

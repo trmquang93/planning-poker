@@ -128,34 +128,52 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
       </div>
 
       <div className="text-center">
-        <div className="text-sm text-gray-500 mb-2">
+        <div className="text-sm text-gray-500 mb-3">
           Votes submitted: {Object.keys(currentStory.votes).length} / {session.participants.length}
         </div>
-        <div className="flex justify-center space-x-2">
-          {session.participants.map((participant) => (
-            <div
-              key={participant.id}
-              className={`
-                w-3 h-3 rounded-full
-                ${participant.name in currentStory.votes 
-                  ? 'bg-green-500' 
-                  : participant.isOnline 
-                    ? 'bg-gray-300' 
-                    : 'bg-red-300'
-                }
-              `}
-              title={`${participant.name}: ${
-                participant.name in currentStory.votes 
-                  ? 'Voted' 
-                  : participant.isOnline 
-                    ? 'Not voted' 
-                    : 'Offline'
-              }`}
-            />
-          ))}
+        
+        {/* Participant status list with names visible */}
+        <div className="space-y-2 mb-3">
+          {session.participants.map((participant) => {
+            const hasVoted = participant.name in currentStory.votes;
+            const isOnline = participant.isOnline;
+            
+            return (
+              <div
+                key={participant.id}
+                className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg"
+              >
+                <div className="flex items-center space-x-2">
+                  <div
+                    className={`
+                      w-3 h-3 rounded-full flex-shrink-0
+                      ${hasVoted 
+                        ? 'bg-green-500' 
+                        : isOnline 
+                          ? 'bg-gray-300' 
+                          : 'bg-red-300'
+                      }
+                    `}
+                  />
+                  <span className="text-sm font-medium text-gray-700 truncate">
+                    {participant.name}
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500 flex-shrink-0">
+                  {hasVoted 
+                    ? '✅ Voted' 
+                    : isOnline 
+                      ? '⏳ Pending' 
+                      : '🔴 Offline'
+                  }
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <div className="text-xs text-gray-400 mt-1">
-          🟢 Voted • ⚪ Not voted • 🔴 Offline
+        
+        <div className="text-xs text-gray-400">
+          🟢 Voted • ⚪ Pending • 🔴 Offline
         </div>
       </div>
 
