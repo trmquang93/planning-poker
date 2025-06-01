@@ -191,7 +191,6 @@ class SocketService {
         reconnectionAttempts: isProduction ? 5 : 0,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
-        maxReconnectionAttempts: 5,
         randomizationFactor: 0.5,
         rememberUpgrade: false, // Don't remember transport upgrades
         multiplex: false, // Disable connection multiplexing
