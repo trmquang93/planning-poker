@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSessionStore } from '../stores/sessionStore';
 import { apiService } from '../services/apiService';
 
@@ -10,9 +10,23 @@ const HomePage = () => {
   const [sessionTitle, setSessionTitle] = useState('');
   const [scale, setScale] = useState<'FIBONACCI' | 'T_SHIRT' | 'POWERS_OF_2'>('FIBONACCI');
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [isFromInviteLink, setIsFromInviteLink] = useState(false);
   
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isCreating, isJoining, error, setIsCreating, setIsJoining, setError, clearError } = useSessionStore();
+
+  // Handle invite link URL parameters
+  useEffect(() => {
+    const joinCode = searchParams.get('join');
+    if (joinCode) {
+      setSessionCode(joinCode.toUpperCase());
+      setIsFromInviteLink(true);
+      // Clear the URL parameter to clean up the address bar
+      setSearchParams({});
+      console.info('Auto-filled session code from invite link:', joinCode);
+    }
+  }, [searchParams, setSearchParams]);
 
   const handleCreateSession = async () => {
     if (!facilitatorName.trim() || !sessionTitle.trim()) {
@@ -170,14 +184,24 @@ const HomePage = () => {
               Join Existing Session
             </h2>
             <div className="space-y-4">
-              <input
-                type="text"
-                placeholder="Session Code (e.g., ABC123)"
-                value={sessionCode}
-                onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
-                className="input"
-                maxLength={6}
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Session Code (e.g., ABC123)"
+                  value={sessionCode}
+                  onChange={(e) => {
+                    setSessionCode(e.target.value.toUpperCase());
+                    setIsFromInviteLink(false); // Clear invite link flag when manually editing
+                  }}
+                  className={`input ${isFromInviteLink ? 'border-green-500 bg-green-50' : ''}`}
+                  maxLength={6}
+                />
+                {isFromInviteLink && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <span className="text-green-600 text-sm font-medium">✓ From invite link</span>
+                  </div>
+                )}
+              </div>
               <input
                 type="text"
                 placeholder="Your Name"
