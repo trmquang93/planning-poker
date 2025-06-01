@@ -37,19 +37,69 @@ class SocketService {
       }
     };
 
-    // Handle various unload scenarios
+    // Handle actual page unload scenarios (but NOT tab switching)
     window.addEventListener('beforeunload', cleanup);
     window.addEventListener('unload', cleanup);
     window.addEventListener('pagehide', cleanup);
     
-    // Handle visibility changes (tab switching, etc.)
+    // Handle visibility changes for tab switching (keep connection alive)
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
-        cleanup();
+        console.info('Tab hidden - keeping socket connection alive');
+        // Don't disconnect! Just log for debugging
+      } else if (document.visibilityState === 'visible') {
+        console.info('Tab visible - ensuring socket connection is healthy');
+        // Check connection health when tab becomes visible
+        this.ensureConnectionHealth();
       }
     });
 
     this.cleanupHandlersAdded = true;
+  }
+
+  /**
+   * Ensure connection is healthy when tab becomes visible
+   */
+  private ensureConnectionHealth(): void {
+    if (!this.socket || !this.isConnected) {
+      console.info('Connection lost while tab was hidden, attempting reconnection');
+      this.attemptReconnection();
+    } else {
+      // Ping the server to ensure connection is still alive
+      this.socket.emit('ping', { timestamp: Date.now() });
+      
+      // In production, verify we can still send/receive data
+      if (window.location.protocol === 'https:') {
+        this.verifyConnectionHealth();
+      }
+    }
+  }
+
+  /**
+   * Verify connection health in production by testing round-trip communication
+   */
+  private verifyConnectionHealth(): void {
+    if (!this.socket || !this.isConnected) return;
+
+    const healthCheckId = `health_${Date.now()}`;
+    const timeout = setTimeout(() => {
+      console.warn('Health check timeout - connection may be stale');
+      if (this.sessionId && this.participantId) {
+        this.attemptReconnection();
+      }
+    }, 5000);
+
+    // Set up one-time listener for health check response
+    const onHealthResponse = (data: { id: string }) => {
+      if (data.id === healthCheckId) {
+        clearTimeout(timeout);
+        console.info('Connection health verified');
+        this.socket?.off('pong', onHealthResponse);
+      }
+    };
+
+    this.socket.on('pong', onHealthResponse);
+    this.socket.emit('ping', { id: healthCheckId, timestamp: Date.now() });
   }
 
   /**
@@ -125,16 +175,24 @@ class SocketService {
       // Generate unique connection ID to prevent any caching
       const connectionId = `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
       
-      // Ensure completely fresh connection with comprehensive options
+      // Production-optimized connection with better resilience
+      const isProduction = window.location.protocol === 'https:';
+      
       this.socket = io(serverUrl, {
-        transports: ['polling'], // Use polling only to avoid upgrade issues
-        timeout: 30000,
+        // Use both transports for better production compatibility
+        transports: isProduction ? ['websocket', 'polling'] : ['polling'],
+        timeout: 20000,
         forceNew: true, // Force completely new connection
         withCredentials: false, // Don't send cookies/credentials
         autoConnect: true,
-        upgrade: false, // Never upgrade to websocket
-        reconnection: false, // Completely disable auto-reconnection
-        reconnectionAttempts: 0, // No reconnection attempts
+        upgrade: isProduction, // Allow upgrade to websocket in production
+        // Enable reconnection for production to handle hosting platform issues
+        reconnection: isProduction,
+        reconnectionAttempts: isProduction ? 5 : 0,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        maxReconnectionAttempts: 5,
+        randomizationFactor: 0.5,
         rememberUpgrade: false, // Don't remember transport upgrades
         multiplex: false, // Disable connection multiplexing
         closeOnBeforeunload: true, // Close connection on page unload
@@ -142,7 +200,8 @@ class SocketService {
           t: Date.now(), // Timestamp to force fresh connection
           cid: connectionId, // Unique connection ID
           fresh: 'true', // Flag for fresh connection
-          v: '1.0' // Version flag to bypass any caching
+          v: '1.0', // Version flag to bypass any caching
+          prod: isProduction ? 'true' : 'false' // Production flag
         }
       });
 
@@ -423,24 +482,30 @@ class SocketService {
   }
 
   /**
-   * Attempt to reconnect to the server
+   * Attempt to reconnect to the server with production-specific logic
    */
   private attemptReconnection(): void {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+    const isProduction = window.location.protocol === 'https:';
+    const maxAttempts = isProduction ? 8 : this.maxReconnectAttempts;
+    
+    if (this.reconnectAttempts >= maxAttempts) {
       console.error('Max reconnection attempts reached');
       this.emit('reconnection_failed');
       return;
     }
 
     this.reconnectAttempts++;
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+    // Use more aggressive reconnection in production
+    const baseDelay = isProduction ? 2000 : 1000;
+    const delay = Math.min(baseDelay * Math.pow(1.5, this.reconnectAttempts), 15000);
     
-    console.info(`Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
+    console.info(`Attempting reconnection ${this.reconnectAttempts}/${maxAttempts} in ${delay}ms (production: ${isProduction})`);
     
     setTimeout(() => {
       if (!this.isConnected) {
         this.connect()
           .then(() => {
+            console.info('Reconnection successful');
             this.emit('reconnected');
             // Rejoin session if we were in one
             if (this.sessionId && this.participantId) {
@@ -448,7 +513,8 @@ class SocketService {
               this.emit('rejoin_session_needed', this.sessionId, this.participantId);
             }
           })
-          .catch(() => {
+          .catch((error) => {
+            console.warn(`Reconnection attempt ${this.reconnectAttempts} failed:`, error);
             this.attemptReconnection();
           });
       }

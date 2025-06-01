@@ -632,6 +632,16 @@ export const setupSocketHandlers = (io: SocketIOServer): void => {
       }
     });
 
+    // Handle ping/pong for connection health checks
+    socket.on('ping', (data) => {
+      // Respond to ping with pong to verify connection health
+      socket.emit('pong', { 
+        id: data?.id,
+        timestamp: Date.now(),
+        serverTime: new Date().toISOString()
+      });
+    });
+
     // Handle disconnect
     socket.on('disconnect', async (reason) => {
       console.info(`Client disconnected: ${socket.id}, reason: ${reason}`);
