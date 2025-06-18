@@ -309,7 +309,7 @@ describe('VotingInterface', () => {
       mockSession.status = 'revealing';
     });
 
-    it('should show revealed votes when session is in revealing state', () => {
+    it('should show votes complete when session is in revealing state', () => {
       render(
         <VotingInterface
           session={mockSession}
@@ -318,14 +318,11 @@ describe('VotingInterface', () => {
         />
       );
 
-      expect(screen.getByText('Votes Revealed!')).toBeInTheDocument();
-      expect(screen.getByText('John Facilitator:')).toBeInTheDocument();
-      expect(screen.getByText('5')).toBeInTheDocument();
-      expect(screen.getByText('Jane Member:')).toBeInTheDocument();
-      expect(screen.getByText('8')).toBeInTheDocument();
+      expect(screen.getByText('Votes Complete!')).toBeInTheDocument();
+      expect(screen.getByText('Voting is finished. Check the Story Manager below for detailed results and final estimates.')).toBeInTheDocument();
     });
 
-    it('should show both submitted vote state and revealed votes', () => {
+    it('should show both submitted vote state and votes complete message', () => {
       render(
         <VotingInterface
           session={mockSession}
@@ -334,12 +331,11 @@ describe('VotingInterface', () => {
         />
       );
 
-      // Should show the submitted vote state
-      expect(screen.getByText('Vote Submitted')).toBeInTheDocument();
-      expect(screen.getByText('Your vote: 5')).toBeInTheDocument();
+      // Should show the votes complete section
+      expect(screen.getByText('Votes Complete!')).toBeInTheDocument();
       
-      // AND the revealed votes section
-      expect(screen.getByText('Votes Revealed!')).toBeInTheDocument();
+      // Should show the voting is disabled
+      expect(screen.getByText('🔒 Voting is now closed')).toBeInTheDocument();
     });
   });
 

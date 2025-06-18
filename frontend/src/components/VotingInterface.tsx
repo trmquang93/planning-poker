@@ -178,18 +178,13 @@ const VotingInterface: React.FC<VotingInterfaceProps> = ({
       </div>
 
       {session.status === 'revealing' && (
-        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="text-center">
             <div className="text-2xl mb-2">🎉</div>
-            <h4 className="font-medium text-yellow-900 mb-2">Votes Revealed!</h4>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              {Object.entries(currentStory.votes).map(([participant, vote]) => (
-                <div key={participant} className="flex justify-between">
-                  <span className="text-yellow-700">{participant}:</span>
-                  <span className="font-medium text-yellow-900">{vote}</span>
-                </div>
-              ))}
-            </div>
+            <h4 className="font-medium text-green-900 mb-2">Votes Complete!</h4>
+            <p className="text-green-800 text-sm">
+              Voting is finished. Check the Story Manager below for detailed results and final estimates.
+            </p>
           </div>
         </div>
       )}
